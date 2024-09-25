@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#FFE4C4	"
+    android:gravity="center"
+    >
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dare Up"
+        android:textSize="75dp"
+
+        android:textColor="#FF7F50"
+        android:fontFamily="@font/font2"
+        android:shadowColor="#8B0000"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="5"
+        android:layout_gravity="center"
+        android:layout_marginBottom="32dp" />
+
+    <EditText
+        android:id="@+id/username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="номер телефона"
+        android:textColorHint="#FF7F50"
+        android:textColor="#FF7F50"
+        android:fontFamily="@font/font2"
+        android:textSize="30dp"
+        android:backgroundTint="#FF7F50"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="пароль"
+        android:textColorHint="#FF7F50"
+        android:textColor="#FF7F50"
+        android:fontFamily="@font/font2"
+        android:textSize="30sp"
+        android:backgroundTint="#FF7F50"
+        android:inputType="textPassword"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="войти"
+        android:backgroundTint="#8B0000"
+        android:textColor="#FF7F50"
+        android:fontFamily="@font/font2"
+        android:textSize="30sp"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnRegister"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="зарегистрироваться"
+        android:backgroundTint="#8B0000"
+        android:textColor="#FF7F50"
+        android:fontFamily="@font/font2"
+        android:textSize="30sp"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnContinue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="продолжить без регистрации"
+        android:backgroundTint="#8B0000"
+        android:textColor="#FF7F50"
+        android:fontFamily="@font/font2"
+        android:textSize="30sp"
+        />
+</LinearLayout>
