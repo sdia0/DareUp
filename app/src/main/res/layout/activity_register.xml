@@ -5,8 +5,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#FFE4C4	"
-    android:gravity="center"
+    android:background="#FFE4C4"
+    android:layout_gravity="center"
     >
 
 
@@ -15,15 +15,25 @@
         android:layout_height="wrap_content"
         android:text="Dare Up"
         android:textSize="75dp"
-
         android:textColor="#FF7F50"
         android:fontFamily="@font/overdozesans"
         android:shadowColor="#8B0000"
         android:shadowDx="2"
         android:shadowDy="2"
         android:shadowRadius="5"
-        android:layout_gravity="center"
-        android:layout_marginBottom="32dp" />
+        android:layout_gravity="center" />
+
+    <EditText
+        android:id="@+id/editName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Имя"
+        android:textColorHint="#FF7F50"
+        android:textColor="#FF7F50"
+        android:fontFamily="@font/overdozesans"
+        android:textSize="30sp"
+        android:backgroundTint="#FF7F50"
+        android:layout_marginBottom="16dp"/>
 
     <EditText
         android:id="@+id/editLogin"
@@ -50,16 +60,31 @@
         android:inputType="textPassword"
         android:layout_marginBottom="16dp"/>
 
-    <Button
-        android:id="@+id/btnLogin"
+    <EditText
+        android:id="@+id/editRepeatPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Войти"
-        android:backgroundTint="#8B0000"
+        android:hint="повторите пароль"
+        android:textColorHint="#FF7F50"
         android:textColor="#FF7F50"
         android:fontFamily="@font/overdozesans"
         android:textSize="30sp"
+        android:backgroundTint="#FF7F50"
+        android:inputType="textPassword"
         android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/btnLoadPhoto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Загрузить фото"
+        android:background="@drawable/load_photo"
+        android:fontFamily="@font/overdozesans"
+        android:textSize="30sp"
+        android:textColor="#FF7F50"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        android:padding="15dp"/>
 
     <Button
         android:id="@+id/btnRegister"
@@ -71,15 +96,4 @@
         android:fontFamily="@font/overdozesans"
         android:textSize="30sp"
         android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btnContinue"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Продолжить без регистрации"
-        android:backgroundTint="#8B0000"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
-        android:textSize="30sp"
-        />
 </LinearLayout>
