@@ -1,6 +1,7 @@
 package com.example.dareup;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -11,51 +12,56 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-import java.util.ArrayList;
-import java.util.Objects;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class WelcomeActivity extends AppCompatActivity {
-    private DatabaseReference mDatabase;
-    Button btnLogin, btnRegister, btnContinue;
-    EditText editLogin, editPassword;
-    ArrayList<User> userList;
+    private Button btnLogin, btnRegister, btnContinue;
+    private EditText editLogin, editPassword;
+    private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_welcome);
+
+        // Проверка, вошел ли пользователь ранее
+        SharedPreferences preferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        boolean isLoggedIn = preferences.getBoolean("isLoggedIn", false);
+
+        if (isLoggedIn) {
+            // Если пользователь уже вошел, сразу переходим в MainActivity
+            startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
+            finish(); // Закрываем WelcomeActivity
+            return;
+        }
+
         btnLogin = findViewById(R.id.btnLogin);
         btnRegister = findViewById(R.id.btnRegister);
         btnContinue = findViewById(R.id.btnContinue);
         editLogin = findViewById(R.id.editLogin);
         editPassword = findViewById(R.id.editPassword);
-        userList = new ArrayList<>();
-        mDatabase = FirebaseDatabase.getInstance().getReference("users");
+
+        mAuth = FirebaseAuth.getInstance();
+
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Выполняем асинхронную проверку пользователя
-                checkUserExist(editLogin.getText().toString(), editPassword.getText().toString());
+                loginUser(editLogin.getText().toString().trim(), editPassword.getText().toString().trim());
             }
         });
+
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(WelcomeActivity.this, RegisterActivity.class));
             }
         });
+
         btnContinue.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -63,34 +69,33 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
     }
-    // Метод для загрузки списка расходов из Firebase
-    private void checkUserExist(String login, String password) {
-        mDatabase.addListenerForSingleValueEvent(new ValueEventListener() { // Используем addListenerForSingleValueEvent вместо addValueEventListener
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                boolean userFound = false;
-                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
-                    User user = userSnapshot.getValue(User.class);
-                    if (user != null && Objects.equals(user.login, login) && Objects.equals(user.password, password)) {
-                        userFound = true;
-                        break; // Если пользователь найден, выходим из цикла
+
+    // Метод для входа пользователя
+    private void loginUser(String email, String password) {
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Пожалуйста, введите электронную почту и пароль", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        if (task.isSuccessful()) {
+                            // Если вход успешен, сохраняем состояние входа
+                            SharedPreferences preferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = preferences.edit();
+                            editor.putBoolean("isLoggedIn", true);
+                            editor.apply();
+
+                            // Переход на MainActivity
+                            startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
+                            finish(); // Закрыть WelcomeActivity
+                        } else {
+                            // Если вход не удался, показать сообщение
+                            Toast.makeText(WelcomeActivity.this, "Ошибка входа: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
                     }
-                }
-
-                if (userFound) {
-                    // Переходим на MainActivity
-                    startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
-                } else {
-                    // Показываем Toast, если пользователь не найден
-                    Toast.makeText(WelcomeActivity.this, "Такого пользователя не существует", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                // Обрабатываем ошибку
-                Toast.makeText(WelcomeActivity.this, "Ошибка подключения к базе данных", Toast.LENGTH_SHORT).show();
-            }
-        });
+                });
     }
 }

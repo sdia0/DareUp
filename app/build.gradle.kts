@@ -39,6 +39,8 @@ dependencies {
     // Конвертер Gson для обработки JSON-ответов
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
+    implementation("com.google.firebase:firebase-auth:22.0.0")
+
     // OkHttp (опционально, для логирования запросов)
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
     // ML Kit для сканирования штрихкодов
@@ -48,6 +50,12 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.1.0")
     implementation("androidx.camera:camera-lifecycle:1.1.0")
     implementation("androidx.camera:camera-view:1.0.0-alpha30")
+
+    implementation("com.google.firebase:firebase-storage:20.2.1")
+
+    implementation("com.github.bumptech.glide:glide:4.12.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#FFE4C4	"
+    android:background="#FFE4C4"
     android:gravity="center"
     >
 
@@ -15,7 +15,6 @@
         android:layout_height="wrap_content"
         android:text="Dare Up"
         android:textSize="75dp"
-
         android:textColor="#FF7F50"
         android:fontFamily="@font/overdozesans"
         android:shadowColor="#8B0000"
@@ -29,7 +28,7 @@
         android:id="@+id/editLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="номер телефона"
+        android:hint="почта"
         android:textColorHint="#FF7F50"
         android:textColor="#FF7F50"
         android:fontFamily="@font/overdozesans"
