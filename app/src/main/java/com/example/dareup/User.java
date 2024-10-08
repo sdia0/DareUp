@@ -1,17 +1,26 @@
 package com.example.dareup;
 
 public class User {
-    String id, name, photoUrl;
+    String id, name, photoUrl, activeTask;
     int level, xp;
 
     public User() {}
 
-    public User(String id, String name, int level, int xp, String photoUrl) {
+    public User(String id, String name, int level, int xp, String photoUrl, String activeTask) {
         this.id = id;
         this.name = name;
         this.level = level;
         this.xp = xp;
         this.photoUrl = photoUrl;
+        this.activeTask = activeTask;
+    }
+
+    public String getActiveTask() {
+        return activeTask;
+    }
+
+    public void setActiveTask(String activeTask) {
+        this.activeTask = activeTask;
     }
 
     public String getId() {

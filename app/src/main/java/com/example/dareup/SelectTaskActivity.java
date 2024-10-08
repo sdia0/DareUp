@@ -12,6 +12,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -71,6 +73,17 @@ public class SelectTaskActivity extends AppCompatActivity {
                 editor.putString("taskId", selectedTaskId); // Сохраняем ID задания
                 editor.putString("difficultyLevel", difficultyLevel); // Сохраняем ID задания
                 editor.apply();
+
+                // Сброс активного задания в базе данных
+                FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+                if (currentUser != null) {
+                    String userId = currentUser.getUid();
+                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users").child(userId);
+                    databaseReference.child("activeTask").setValue(selectedTask); // Устанавливаем пустую строку
+                }
+
                 Intent intent = new Intent(SelectTaskActivity.this, MainActivity.class);
                 startActivity(intent);
             }

@@ -139,6 +139,9 @@ public class HomeFragment extends Fragment {
                     int xpToAdd = getXpForDifficulty(difficultyLevel); // Implement this method based on your logic
                     addXpToUser(userId, xpToAdd);
 
+                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users").child(userId);
+                    databaseReference.child("activeTask").setValue(""); // Устанавливаем пустую строку
+
                     Intent intent = new Intent(getActivity(), WinnerActivity.class);
                     startActivity(intent);
 
@@ -151,6 +154,16 @@ public class HomeFragment extends Fragment {
         btnNewTask.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Сброс активного задания в базе данных
+                FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+                if (currentUser != null) {
+                    String userId = currentUser.getUid();
+                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users").child(userId);
+                    databaseReference.child("activeTask").setValue(""); // Устанавливаем пустую строку
+                }
+
                 Intent intent = new Intent(getActivity(), DifficultyActivity.class);
                 startActivity(intent);
             }
@@ -193,6 +206,14 @@ public class HomeFragment extends Fragment {
                                 .centerCrop()
                                 .circleCrop()
                                 .into(ibProfilePicture);
+
+                        // Установка задания из поля activeTask
+                        String activeTask = user.getActiveTask(); // предполагаем, что в User есть поле activeTask
+                        if (activeTask != null && !activeTask.isEmpty()) {
+                            tvTask.setText(activeTask);
+                        } else {
+                            tvTask.setText("Выбрать задание");
+                        }
                     }
                 }
 

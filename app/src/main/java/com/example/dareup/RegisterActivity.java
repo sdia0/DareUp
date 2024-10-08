@@ -91,7 +91,7 @@ public class RegisterActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             String uid = user.getUid();
-                            User newUser = new User(uid, name, 1, 0, ""); // Уровень 1 и очки 0
+                            User newUser = new User(uid, name, 1, 0, "", ""); // Уровень 1 и очки 0
                             mDatabase.child(uid).setValue(newUser)
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
