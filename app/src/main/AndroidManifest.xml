@@ -21,10 +21,22 @@
         android:theme="@style/Theme.DareUp"
         tools:targetApi="31">
         <activity
-            android:name=".RegisterActivity"
+            android:name=".ItemActivity"
             android:exported="false" />
         <activity
-            android:name=".CheckActivity"
+            android:name=".DifficultyActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SelectTaskActivity"
+            android:exported="false" />
+        <activity
+            android:name=".WinnerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".NewTask"
+            android:exported="false" />
+        <activity
+            android:name=".RegisterActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

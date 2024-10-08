@@ -1,0 +1,59 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@color/forBackground"
+    android:layout_marginBottom="10dp"
+    android:padding="5dp">
+
+    <TextView
+        android:id="@+id/tvPosition"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:fontFamily="@font/font3"
+        android:textColor="@color/forText"
+        android:layout_marginStart="10dp"
+        android:text="1"
+        android:gravity="center"/>
+
+    <ImageButton
+        android:id="@+id/profilePicture"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/round_button"
+        android:scaleType="centerCrop"
+        android:layout_marginStart="10dp"
+        android:src="@drawable/default_profile_picture"/>
+
+    <TextView
+        android:id="@+id/tvNickname"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:fontFamily="@font/font3"
+        android:textColor="@color/forText"
+        android:layout_marginStart="10dp"
+        android:text="Никнейм"
+        android:gravity="center"/>
+
+    <TextView
+        android:id="@+id/tvLevel"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:fontFamily="@font/font3"
+        android:textColor="@color/forText"
+        android:layout_marginStart="10dp"
+        android:text="Level: 1"
+        android:gravity="center"/>
+
+    <TextView
+        android:id="@+id/tvXP"
+        android:layout_width="60dp"
+        android:layout_height="match_parent"
+        android:fontFamily="@font/font3"
+        android:textColor="@color/forText"
+        android:layout_marginStart="10dp"
+        android:text="0xp"
+        android:gravity="center"/>
+</LinearLayout>

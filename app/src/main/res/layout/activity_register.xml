@@ -27,7 +27,7 @@
         android:id="@+id/editName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Имя"
+        android:hint="Никнейм"
         android:textColorHint="#FF7F50"
         android:textColor="#FF7F50"
         android:fontFamily="@font/overdozesans"
@@ -39,7 +39,7 @@
         android:id="@+id/editLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="номер телефона"
+        android:hint="email"
         android:textColorHint="#FF7F50"
         android:textColor="#FF7F50"
         android:fontFamily="@font/overdozesans"
@@ -74,7 +74,7 @@
         android:layout_marginBottom="16dp"/>
 
     <TextView
-        android:id="@+id/btnLoadPhoto"
+        android:id="@+id/tvLoadPhoto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Загрузить фото"

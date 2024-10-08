@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/forBackground"
+    android:fitsSystemWindows="true">
+
+    <TextView
+        android:id="@+id/tvTask"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:text="Выбрать сложность задания"
+        android:textColor="@color/forText"
+        android:fontFamily="@font/font3"
+        android:shadowColor="#8B0000"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="5"
+        android:textSize="30sp"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:layout_gravity="center"
+        android:layout_marginTop="150dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="100dp">
+
+        <Button
+            android:id="@+id/btnHard"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:alpha="0.8"
+            android:backgroundTint="@color/forText"
+            android:elevation="25dp"
+            android:fontFamily="@font/font3"
+            android:text="Сложный"
+            android:textColor="#4169E1"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_marginStart="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="20xp"
+            android:textSize="20sp"
+            android:fontFamily="@font/font3"
+            android:textColor="@color/forText"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="20dp">
+
+        <Button
+            android:id="@+id/btnMedium"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:alpha="0.8"
+            android:backgroundTint="@color/forText"
+            android:elevation="25dp"
+            android:fontFamily="@font/font3"
+            android:text="Средний"
+            android:textColor="#4169E1"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_marginStart="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="10xp"
+            android:textSize="20sp"
+            android:fontFamily="@font/font3"
+            android:textColor="@color/forText"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="20dp">
+
+        <Button
+            android:id="@+id/btnEasy"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:alpha="0.8"
+            android:backgroundTint="@color/forText"
+            android:elevation="25dp"
+            android:fontFamily="@font/font3"
+            android:text="Легкий"
+            android:textColor="#4169E1"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_marginStart="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" 5xp"
+            android:textSize="20sp"
+            android:fontFamily="@font/font3"
+            android:textColor="@color/forText"/>
+
+    </LinearLayout>
+
+</LinearLayout>

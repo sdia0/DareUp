@@ -33,6 +33,22 @@ android {
 }
 
 dependencies {
+    implementation("nl.dionsegijn:konfetti-xml:2.0.0@aar")
+    implementation("nl.dionsegijn:konfetti-core:2.0.2")
+    implementation("androidx.preference:preference:1.2.0")
+    implementation(platform("com.google.firebase:firebase-bom:32.0.0"))
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+
+    implementation("com.google.firebase:firebase-auth:21.3.0")
+    implementation("com.google.firebase:firebase-storage:20.2.0")
+    implementation("com.google.firebase:firebase-firestore:25.0.0")
+
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
+    implementation("com.getkeepsafe.taptargetview:taptargetview:1.13.3")
+
+    implementation("com.google.android.material:material:1.9.0'") // Версия может отличаться
+
+
     // Retrofit для выполнения HTTP-запросов
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
 

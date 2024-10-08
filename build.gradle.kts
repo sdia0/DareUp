@@ -1,7 +1,7 @@
 buildscript {
     dependencies {
         classpath(libs.google.services)
-        classpath("com.android.tools.build:gradle:7.0.4") // или текущая версия Android Gradle Plugin
+        classpath("com.android.tools.build:gradle:8.0.2") // или текущая версия Android Gradle Plugin
         classpath("com.google.gms:google-services:4.4.2") // Зависимость Google Services
     }
     repositories {
