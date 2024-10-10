@@ -23,6 +23,16 @@ public class MainActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
     private TabLayout tabLayout;
+    private static final int REQUEST_CODE_EDIT_TASK = 1;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_EDIT_TASK && resultCode == RESULT_OK) {
+            // Вызываем метод обновления данных во фрагменте
+            updateTasksFragment();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,14 +42,12 @@ public class MainActivity extends AppCompatActivity {
         // Получаем данные из Intent
         Intent intent = getIntent();
         long retryAfter = intent.getLongExtra("retryAfter", 0);  // Получаем retryAfter (по умолчанию 0)
-        String task = intent.getStringExtra("selectedTask");
-        String taskId = intent.getStringExtra("selectedTaskId");
 
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.viewPager);
 
         // Передаем retryAfter и другие параметры в адаптер
-        viewPager.setAdapter(new ScreenSlidePagerAdapter(this, retryAfter, task, taskId));
+        viewPager.setAdapter(new ScreenSlidePagerAdapter(this, retryAfter));
 
         // Устанавливаем текущий элемент на второй (индекс 1) - HomeFragment
         viewPager.setCurrentItem(1);
@@ -83,13 +91,9 @@ public class MainActivity extends AppCompatActivity {
 
     private class ScreenSlidePagerAdapter extends FragmentStateAdapter {
         private long retryAfter;  // Переменная для хранения retryAfter
-        private String task, taskId;
-
-        public ScreenSlidePagerAdapter(FragmentActivity fa, long retryAfterValue, String task, String taskId) {
+        public ScreenSlidePagerAdapter(FragmentActivity fa, long retryAfterValue) {
             super(fa);
             this.retryAfter = retryAfterValue;  // Присваиваем значение переменной класса
-            this.task = task;
-            this.taskId = taskId;
         }
 
         @NonNull
@@ -99,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 case 0:
                     return new TasksFragment();
                 case 1:
-                    return HomeFragment.newInstance(retryAfter, task, taskId);  // Передаем параметры в HomeFragment
+                    return HomeFragment.newInstance(retryAfter);  // Передаем параметры в HomeFragment
                 case 2:
                     return new LeaderboardFragment();
                 default:
@@ -126,5 +130,13 @@ public class MainActivity extends AppCompatActivity {
                     .setDuration(500) // длительность анимации в миллисекундах
                     .withEndAction(() -> tabLayout.setVisibility(View.GONE)); // скрыть по завершении анимации
         }, 1000); // Показать TabLayout на 1 секунду
+    }
+
+    public void updateTasksFragment() {
+        // Получение TasksFragment
+        Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + viewPager.getCurrentItem());
+        if (fragment instanceof TasksFragment) {
+            ((TasksFragment) fragment).updateData(); // Вызов метода обновления
+        }
     }
 }

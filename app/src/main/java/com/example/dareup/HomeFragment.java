@@ -53,7 +53,7 @@ public class HomeFragment extends Fragment {
     private TextView tvTask, nickname, xp, level;
     private CountDownTimer countDownTimer;
     private long retryAfter; // Время в миллисекундах, полученное из другой активности
-    String task, taskId, difficultyLevel;
+    String difficultyLevel;
     private long[] endTime = new long[1]; // Время окончания таймера
     private static final String PREFS_NAME = "TimerPrefs";
     private static final String KEY_END_TIME = "end_time";
@@ -63,12 +63,10 @@ public class HomeFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static HomeFragment newInstance(long retryAfter, String task, String taskId) {
+    public static HomeFragment newInstance(long retryAfter) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
         args.putLong("retryAfter", retryAfter); // Сохранение значения в аргументах
-        args.putString("task", task);
-        args.putString("taskId", taskId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -254,7 +252,6 @@ public class HomeFragment extends Fragment {
             Log.d("UID", "Пользователь не авторизован");
         }*/
 
-
         return view;
     }
 
@@ -372,14 +369,6 @@ public class HomeFragment extends Fragment {
             } else {
                 Toast.makeText(getActivity(), "Не удалось получить текущие XP.", Toast.LENGTH_SHORT).show();
                 Log.d("FirebaseGetXP", "Ошибка получения XP: " + task.getException());
-            }
-        });
-
-        database.child("activeTask").setValue("").addOnCompleteListener(updateTask -> {
-            if (updateTask.isSuccessful()) {
-                Log.d("FirebaseUpdate", "ActiveTask обновлен успешно!");
-            } else {
-                Log.d("FirebaseUpdate", "Ошибка обновления ActiveTask: " + updateTask.getException());
             }
         });
         saveActiveTaskToFile("");

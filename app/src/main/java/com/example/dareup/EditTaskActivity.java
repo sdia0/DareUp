@@ -1,9 +1,11 @@
 package com.example.dareup;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -11,6 +13,13 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,10 +30,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -32,6 +44,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class EditTaskActivity extends AppCompatActivity {
     Button btnSave, btnCancel;
@@ -66,11 +80,26 @@ public class EditTaskActivity extends AppCompatActivity {
             public void onClick(View v) {
                 fetchActiveTaskAndSaveMemory();
                 Intent intent = new Intent(EditTaskActivity.this, MainActivity.class);
-                intent.putExtra("selectedTask", "Выбрать задание");
+                intent.putExtra("dataChanged", true); // Передаем информацию о том, что данные изменились
+                setResult(RESULT_OK, intent);
                 startActivity(intent);
+                finish();
                 }
-            });
-        }
+            }
+        );
+
+        btnCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                fetchActiveTaskAndSaveMemory();
+                Intent intent = new Intent(EditTaskActivity.this, MainActivity.class);
+                intent.putExtra("dataChanged", true); // Передаем информацию о том, что данные изменились
+                setResult(RESULT_OK, intent);
+                startActivity(intent);
+                finish();
+            }
+        });
+    }
 
 
     // Метод для подгрузки activeTask в TextView сразу при запуске активности
@@ -112,6 +141,8 @@ public class EditTaskActivity extends AppCompatActivity {
 
     // Метод для сохранения памяти и сброса activeTask
     private void fetchActiveTaskAndSaveMemory() {
+        String title = etTitle.getText().toString().trim();
+        String description = etNotes.getText().toString().trim();
         // Получаем текущего пользователя
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
@@ -131,7 +162,8 @@ public class EditTaskActivity extends AppCompatActivity {
                         String activeTask = dataSnapshot.getValue(String.class);
 
                         // Сохраняем данные в memories
-                        saveMemoryToFirebase(activeTask, userId);
+                        saveMemoryToFirebase(title, activeTask, description);
+                        saveMemoryToFile(title, activeTask, description);
                     } else {
                         Log.e("Firebase", "activeTask not found.");
                     }
@@ -145,40 +177,90 @@ public class EditTaskActivity extends AppCompatActivity {
         }
     }
 
-    private void saveMemoryToFirebase(String task, String userId) {
-        // Получаем данные из EditText
-        String title = etTitle.getText().toString().trim();
-        String description = etNotes.getText().toString().trim();
+    private void saveMemoryToFirebase(String title, String task, String description) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        String uid = user.getUid();
+        String memoryId = mDatabase.child("memories").child(uid).push().getKey();
 
-        // Проверяем, что поля не пустые
-        if (title.isEmpty() || task == null || task.isEmpty() || description.isEmpty()) {
-            Log.e("Firebase", "One or more fields are empty. Data not saved.");
-            return; // Останавливаем выполнение, если какое-то поле пустое
-        }
+        Memory memory = new Memory(memoryId, task, title, description); // Уровень 1 и очки 0
 
-        // Создаем объект Memory
-        Memory memory = new Memory(title, task, description);
-
-        // Сохраняем данные в Firebase Database в таблицу "memories"
-        DatabaseReference memoryRef = mDatabase.child("memories").child(userId).push();
-        memoryRef.setValue(memory)
-                .addOnCompleteListener(task1 -> {
-                    if (task1.isSuccessful()) {
-                        Log.d("Firebase", "Memory saved successfully.");
-
-                        // После успешного сохранения удаляем activeTask (только для этого пользователя)
-                        mDatabase.child("users").child(userId).child("activeTask").setValue("")
-                                .addOnCompleteListener(updateTask -> {
-                                    if (updateTask.isSuccessful()) {
-                                        Log.d("Firebase", "activeTask reset to empty.");
-                                    } else {
-                                        Log.e("Firebase", "Error resetting activeTask: " + updateTask.getException());
-                                    }
-                                });
-
-                    } else {
-                        Log.e("Firebase", "Error saving memory.", task1.getException());
+        mDatabase.child("memories").child(uid).push().setValue(memory)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Log.e("Adding task", "Succeed to add memory to database", task.getException());
+                        } else {
+                            Log.e("Adding task", "Failed to add memory to database", task.getException());
+                        }
                     }
                 });
+    }
+    // Метод для добавления объекта Memory в JSON-файл
+    private void saveMemoryToFile(String title, String task, String description) {
+
+        // Создаем объект Memory
+        Memory newMemory = new Memory("", title, task, description);
+
+        // Прочитать существующий JSON-файл
+        List<Memory> memoryList = new ArrayList<>();
+
+        String fileName = "memories.json";
+
+        FileInputStream fis = null;
+        BufferedReader reader = null;
+        try {
+            fis = openFileInput(fileName);
+            reader = new BufferedReader(new InputStreamReader(fis));
+            StringBuilder builder = new StringBuilder();
+            String line;
+
+            // Чтение строки за строкой и добавление в StringBuilder
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+            }
+
+            // Преобразование прочитанного текста в список Memory
+            String json = builder.toString();
+            if (!json.isEmpty()) {
+                Type memoryListType = new TypeToken<ArrayList<Memory>>() {}.getType();
+                memoryList = new Gson().fromJson(json, memoryListType);
+            }
+        } catch (IOException e) {
+            Log.e("EditTaskActivity", "Error reading file: " + e.getMessage(), e);
+        } finally {
+            try {
+                if (reader != null) reader.close();
+                if (fis != null) fis.close();
+            } catch (IOException e) {
+                Log.e("EditTaskActivity", "Error closing file: " + e.getMessage(), e);
+            }
+        }
+
+        // Добавляем новый объект Memory в список
+        memoryList.add(newMemory);
+
+        // Преобразуем обновленный список обратно в JSON
+        Gson gson = new Gson();
+        String updatedJson = gson.toJson(memoryList);
+
+        // Записываем обновленный JSON обратно в файл
+        FileOutputStream fos = null;
+        OutputStreamWriter osw = null;
+        try {
+            fos = openFileOutput(fileName, Context.MODE_PRIVATE);
+            osw = new OutputStreamWriter(fos);
+            osw.write(updatedJson);
+            Log.d("EditTaskActivity", "Memory list updated and saved to file: " + fileName);
+        } catch (IOException e) {
+            Log.e("EditTaskActivity", "Error writing to file: " + e.getMessage(), e);
+        } finally {
+            try {
+                if (osw != null) osw.close();
+                if (fos != null) fos.close();
+            } catch (IOException e) {
+                Log.e("EditTaskActivity", "Error closing file: " + e.getMessage(), e);
+            }
+        }
     }
 }
