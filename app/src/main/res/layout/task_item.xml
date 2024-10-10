@@ -7,36 +7,38 @@
     android:background="@color/forBackground">
 
     <TextView
-        android:id="@+id/task_title"
+        android:id="@+id/userTitle"
         android:text="Название"
-        android:fontFamily="@font/overdozesans"
+        android:fontFamily="@font/font3"
         android:textColor="@color/forText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="28sp"/>
 
     <LinearLayout
-        android:id="@+id/task_details"
+        android:id="@+id/detailsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
 
-    <TextView
-        android:id="@+id/task_description"
-        android:text="Описание"
-        android:fontFamily="@font/overdozesans"
-        android:textColor="@color/forText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="28sp"/>
+        <TextView
+            android:id="@+id/taskTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/font3"
+            android:text="Описание"
+            android:textColor="@color/forText"
+            android:textSize="28sp" />
 
-    <!-- RecyclerView для изображений -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/images_recycler_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="8dp"/>
+        <TextView
+            android:id="@+id/taskDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/font3"
+            android:text="Описание"
+            android:textColor="@color/forText"
+            android:textSize="28sp" />
 
     </LinearLayout>
 </LinearLayout>

@@ -91,13 +91,16 @@ public class RegisterActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             String uid = user.getUid();
-                            User newUser = new User(uid, email, name, 1, 0, ""); // Уровень 1 и очки 0
+
+                            User newUser = new User(uid, name, 1, 0, "", "", ""); // Уровень 1 и очки 0
+
                             mDatabase.child(uid).setValue(newUser)
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
                                             if (task.isSuccessful()) {
                                                 Toast.makeText(RegisterActivity.this, "Письмо для подтверждения отправлено!", Toast.LENGTH_SHORT).show();
+                                                // Отправляем письмо подтверждения и завершаем активность после получения подтверждения
                                                 sendVerificationEmail();
                                                 if (imageUri != null) {
                                                     uploadImageToFirebase(imageUri, uid); // Передаем uid для загрузки изображения
@@ -123,6 +126,7 @@ public class RegisterActivity extends AppCompatActivity {
                         public void onSuccess(Void aVoid) {
                             Toast.makeText(RegisterActivity.this, "Письмо для подтверждения отправлено!", Toast.LENGTH_SHORT).show();
                             finish();
+                            finish(); // Завершить активность после показа тоста
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -150,6 +154,8 @@ public class RegisterActivity extends AppCompatActivity {
             // Обновляем TextView
             loadPhoto.setText("Изображение выбрано!"); // Устанавливаем текст
             loadPhoto.setBackgroundColor(Color.parseColor("#8B0000")); // Меняем цвет view
+            loadPhoto.setBackgroundColor(Color.parseColor("#FFE4C4")); // Меняем цвет view
+            loadPhoto.setTextColor(Color.parseColor("#4169E1"));
         }
     }
 
@@ -189,6 +195,8 @@ public class RegisterActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
                             Toast.makeText(RegisterActivity.this, "URL изображения успешно сохранён!", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(RegisterActivity.this, "URL изображения успешно сохранён!", Toast.LENGTH_SHORT).show();
+                            finish(); // Закрываем активность после завершения
                         } else {
                             Log.e("RegisterActivity", "Failed to save image URL", task.getException());
                         }

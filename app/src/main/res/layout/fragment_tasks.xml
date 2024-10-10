@@ -6,12 +6,12 @@
     android:background="@color/forBackground">
 
     <TextView
+        android:layout_marginTop="20dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/red"
-        android:fontFamily="@font/overdozesans"
+        android:fontFamily="@font/font3"
         android:padding="10dp"
-        android:text="Выполненные задания"
+        android:text="Воспоминания"
         android:textColor="@color/forText"
         android:textSize="36sp"/>
 

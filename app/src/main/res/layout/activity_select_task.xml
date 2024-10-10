@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/forBackground"
+    android:fitsSystemWindows="true">
+
+    <TextView
+        android:id="@+id/tvTask"
+        android:text="Задание"
+        android:layout_width="350dp"
+        android:layout_height="300dp"
+        android:textColor="@color/forText"
+        android:fontFamily="@font/font3"
+        android:shadowColor="#8B0000"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="5"
+        android:textSize="30sp"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:layout_gravity="center"
+        android:layout_marginTop="150dp" />
+
+    <Button
+        android:id="@+id/btnYes"
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:alpha="0.8"
+        android:backgroundTint="@color/forText"
+        android:elevation="25dp"
+        android:fontFamily="@font/font3"
+        android:gravity="center"
+        android:text="Да!"
+        android:textColor="#4169E1"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/btnNo"
+        android:layout_width="250dp"
+        android:layout_height="40dp"
+        android:text="Другое..."
+        android:gravity="center"
+        android:fontFamily="@font/font3"
+        android:textSize="15sp"
+        android:backgroundTint="#00FFFFFF"
+        android:textColor="#FFE4C4"
+        android:layout_gravity="center"
+        android:layout_marginBottom="100dp"
+        android:layout_marginTop="5dp"
+        />
+
+
+
+</LinearLayout>

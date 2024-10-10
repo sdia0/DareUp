@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#FFE4C4"
+    android:background="@color/forBackground"
     android:gravity="center"
     >
 
@@ -15,8 +15,9 @@
         android:layout_height="wrap_content"
         android:text="Dare Up"
         android:textSize="75dp"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
+
+        android:textColor="@color/forText"
+        android:fontFamily="@font/font3"
         android:shadowColor="#8B0000"
         android:shadowDx="2"
         android:shadowDy="2"
@@ -28,24 +29,24 @@
         android:id="@+id/editLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="почта"
-        android:textColorHint="#FF7F50"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
+        android:hint="Почта"
+        android:textColorHint="@color/forText"
+        android:textColor="@color/forText"
+        android:fontFamily="@font/font3"
         android:textSize="30dp"
-        android:backgroundTint="#FF7F50"
+        android:backgroundTint="@color/forText"
         android:layout_marginBottom="16dp"/>
 
     <EditText
         android:id="@+id/editPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="пароль"
-        android:textColorHint="#FF7F50"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
+        android:hint="Пароль"
+        android:textColorHint="@color/forText"
+        android:textColor="@color/forText"
+        android:fontFamily="@font/font3"
         android:textSize="30sp"
-        android:backgroundTint="#FF7F50"
+        android:backgroundTint="@color/forText"
         android:inputType="textPassword"
         android:layout_marginBottom="16dp"/>
 
@@ -54,10 +55,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Войти"
-        android:backgroundTint="#8B0000"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
-        android:textSize="30sp"
+        android:backgroundTint="@color/forText"
+        android:textColor="@color/forBackground"
+        android:fontFamily="@font/font3"
+        android:textSize="25sp"
         android:layout_marginBottom="16dp"/>
 
     <Button
@@ -65,10 +66,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Зарегистрироваться"
-        android:backgroundTint="#8B0000"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
-        android:textSize="30sp"
+        android:backgroundTint="@color/forText"
+        android:textColor="@color/forBackground"
+        android:fontFamily="@font/font3"
+        android:textSize="25sp"
         android:layout_marginBottom="16dp"/>
 
     <Button
@@ -76,9 +77,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Продолжить без регистрации"
-        android:backgroundTint="#8B0000"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
-        android:textSize="30sp"
+        android:backgroundTint="@color/forText"
+        android:textColor="@color/forBackground"
+        android:fontFamily="@font/font3"
+        android:textSize="25sp"
         />
 </LinearLayout>

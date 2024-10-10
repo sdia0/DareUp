@@ -1,16 +1,35 @@
 package com.example.dareup;
 
 public class User {
-    String id, login, password, name, photoUrl;
+    String id, name, photoUrl, activeTask, activeTaskDifficulty;
     int level, xp;
 
-    public User(String id, String login, String name, int level, int xp, String photoUrl) {
+    public User() {}
+
+    public User(String id, String name, int level, int xp, String photoUrl, String activeTask, String activeTaskDifficulty) {
         this.id = id;
-        this.login = login;
         this.name = name;
         this.level = level;
         this.xp = xp;
         this.photoUrl = photoUrl;
+        this.activeTask = activeTask;
+        this.activeTaskDifficulty = activeTaskDifficulty;
+    }
+
+    public String getActiveTaskDifficulty() {
+        return activeTaskDifficulty;
+    }
+
+    public void setActiveTaskDifficulty(String activeTaskDifficulty) {
+        this.activeTaskDifficulty = activeTaskDifficulty;
+    }
+
+    public String getActiveTask() {
+        return activeTask;
+    }
+
+    public void setActiveTask(String activeTask) {
+        this.activeTask = activeTask;
     }
 
     public String getId() {
@@ -19,14 +38,6 @@ public class User {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
     }
 
     public String getName() {
