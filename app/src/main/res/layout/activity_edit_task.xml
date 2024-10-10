@@ -7,72 +7,58 @@
     android:layout_height="match_parent"
     tools:context=".EditTaskActivity"
     android:orientation="vertical"
-    android:background="@color/forBackground">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+    android:background="@color/forBackground"
+    android:layout_gravity="center">
 
     <TextView
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:id="@+id/pageTitle"
         android:layout_height="wrap_content"
         android:text="Оставьте воспоминание..."
-        android:layout_weight="3"
         android:textSize="30sp"
-        android:fontFamily="@font/overdozesans"
-        android:layout_margin="10dp"
+        android:fontFamily="@font/font3"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="20dp"
         android:textColor="@color/forText"
         />
 
-    <Button
-        android:layout_width="0dp"
-        android:layout_weight="1"
+    <TextView
+        android:layout_width="match_parent"
+        android:id="@+id/tvTaskTitle"
         android:layout_height="wrap_content"
-        android:text="Не хочу"
-        android:id="@+id/btnExit"
-        android:textSize="16sp"
-        android:layout_gravity="center"
-        android:layout_marginEnd="10dp"
+        android:text="Задание: "
+        android:textSize="24sp"
+        android:fontFamily="@font/font3"
+        android:layout_margin="10dp"
         android:textColor="@color/forText"
-        android:backgroundTint="@color/forBackground"
-        android:fontFamily="@font/overdozesans"/>
-
-    </LinearLayout>
+        />
 
     <EditText
         android:id="@+id/etTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Название"
-        android:textColorHint="#FF7F50"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
-        android:textSize="24dp"
+        android:textColorHint="@color/forText"
+        android:textColor="@color/forText"
+        android:fontFamily="@font/font3"
+        android:textSize="24sp"
         android:layout_margin="10dp"
-        android:backgroundTint="#FF7F50"
+        android:backgroundTint="@color/forText"
         android:layout_marginBottom="16dp"/>
 
     <EditText
-        android:id="@+id/editLogin"
+        android:id="@+id/etNotes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Добавить заметку..."
-        android:textColorHint="#FF7F50"
-        android:textColor="#FF7F50"
-        android:fontFamily="@font/overdozesans"
+        android:textColorHint="@color/forText"
+        android:textColor="@color/forText"
+        android:fontFamily="@font/font3"
         android:textSize="24dp"
         android:layout_margin="10dp"
-        android:backgroundTint="#FF7F50"
+        android:backgroundTint="@color/forText"
         android:layout_marginBottom="16dp"/>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvPhotos"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:layout_marginBottom="16dp" />
 
     <Button
         android:layout_width="match_parent"
@@ -80,9 +66,22 @@
         android:id="@+id/btnSave"
         android:text="Сохранить"
         android:textSize="30sp"
-        android:fontFamily="@font/overdozesans"
-        android:textColor="@color/forText"
+        android:backgroundTint="@color/forText"
+        android:fontFamily="@font/font3"
+        android:textColor="@color/forBackground"
         android:layout_margin="10dp"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Отмена"
+        android:id="@+id/btnCancel"
+        android:layout_margin="10dp"
+        android:textSize="24sp"
+        android:layout_gravity="center"
+        android:textColor="@color/forBackground"
+        android:backgroundTint="@color/forText"
+        android:fontFamily="@font/font3"/>
 
 
 </LinearLayout>

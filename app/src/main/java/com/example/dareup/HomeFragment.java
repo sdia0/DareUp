@@ -90,13 +90,6 @@ public class HomeFragment extends Fragment {
             taskId = prefs1.getString("taskId", null); // Значение по умолчанию теперь null
             difficultyLevel = prefs1.getString("difficultyLevel", null); // Значение по умолчанию теперь null
 
-            // Устанавливаем текст задания
-            if (task != null || tvTask.getText().toString().equals("00:00:00")) {
-                tvTask.setText(task);
-            } else {
-                tvTask.setText("Выбрать задание"); // Значение по умолчанию, если задания нет
-            }
-
             // Получаем текущее время
             long currentTime = System.currentTimeMillis();
 
@@ -139,15 +132,11 @@ public class HomeFragment extends Fragment {
                     int xpToAdd = getXpForDifficulty(difficultyLevel); // Implement this method based on your logic
                     addXpToUser(userId, xpToAdd);
 
-                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users").child(userId);
-                    databaseReference.child("activeTask").setValue(""); // Устанавливаем пустую строку
-
-                    Intent intent = new Intent(getActivity(), WinnerActivity.class);
-                    startActivity(intent);
-
                 } else {
                     Log.d("UID", "Пользователь не авторизован");
                 }
+                Intent intent = new Intent(getActivity(), WinnerActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -213,6 +202,7 @@ public class HomeFragment extends Fragment {
                             tvTask.setText(activeTask);
                         } else {
                             tvTask.setText("Выбрать задание");
+                            completeTask.setEnabled(false);
                         }
                     }
                 }

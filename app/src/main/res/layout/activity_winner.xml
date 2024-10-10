@@ -26,16 +26,6 @@
             android:layout_marginBottom="100dp"
             android:fontFamily="@font/font3"/>
 
-        <TextView
-            android:textSize="28sp"
-            android:layout_marginBottom="100dp"
-            android:fontFamily="@font/font3"
-            android:textColor="@color/forText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Вы на таком-то месте"
-            android:gravity="center"/>
-
         <Button
             android:id="@+id/btnOk"
             android:layout_width="250dp"

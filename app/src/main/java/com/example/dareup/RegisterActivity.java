@@ -149,7 +149,8 @@ public class RegisterActivity extends AppCompatActivity {
 
             // Обновляем TextView
             loadPhoto.setText("Изображение выбрано!"); // Устанавливаем текст
-            loadPhoto.setBackgroundColor(Color.parseColor("#8B0000")); // Меняем цвет view
+            loadPhoto.setBackgroundColor(Color.parseColor("#FFE4C4")); // Меняем цвет view
+            loadPhoto.setTextColor(Color.parseColor("#4169E1"));
         }
     }
 
@@ -188,7 +189,7 @@ public class RegisterActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
-                            Toast.makeText(RegisterActivity.this, "URL изображения успешно сохранён!", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(RegisterActivity.this, "URL изображения успешно сохранён!", Toast.LENGTH_SHORT).show();
                             finish(); // Закрываем активность после завершения
                         } else {
                             Log.e("RegisterActivity", "Failed to save image URL", task.getException());

@@ -21,7 +21,7 @@
         android:theme="@style/Theme.DareUp"
         tools:targetApi="31">
         <activity
-            android:name=".ItemActivity"
+            android:name=".EditTaskActivity"
             android:exported="false" />
         <activity
             android:name=".DifficultyActivity"
@@ -31,9 +31,6 @@
             android:exported="false" />
         <activity
             android:name=".WinnerActivity"
-            android:exported="false" />
-        <activity
-            android:name=".NewTask"
             android:exported="false" />
         <activity
             android:name=".RegisterActivity"

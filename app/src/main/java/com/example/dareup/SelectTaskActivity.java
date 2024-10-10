@@ -58,6 +58,14 @@ public class SelectTaskActivity extends AppCompatActivity {
                 } else {
                     // Уведомляем пользователя о завершении попыток
                     Toast.makeText(SelectTaskActivity.this, "Вы исчерпали все попытки! Попробуйте позже.", Toast.LENGTH_SHORT).show();
+                    // Установите activeTask в пустую строку в базе данных
+                    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+                    FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                    if (currentUser != null) {
+                        String userId = currentUser.getUid();
+                        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users").child(userId);
+                        databaseReference.child("activeTask").setValue(""); // Обнуляем activeTask
+                    }
                     startRetryTimer();
                 }
             }
