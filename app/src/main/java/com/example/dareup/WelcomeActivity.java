@@ -1,5 +1,6 @@
 package com.example.dareup;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -17,16 +18,26 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 public class WelcomeActivity extends AppCompatActivity {
     private Button btnLogin, btnRegister, btnContinue;
@@ -76,6 +87,7 @@ public class WelcomeActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Выполняем асинхронную проверку пользователя
                 loginUser(editLogin.getText().toString().trim(), editPassword.getText().toString().trim());
+                loadMemoriesAndSavetoFile();
             }
         });
 
@@ -174,6 +186,60 @@ public class WelcomeActivity extends AppCompatActivity {
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    public void loadMemoriesAndSavetoFile() {
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            // Получаем ID текущего пользователя
+            String userId = currentUser.getUid();
+
+            // Ссылка на конкретного пользователя в базе данных
+            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("memories").child(userId);
+            databaseReference.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    List<Memory> memoryList = new ArrayList<>();  // Создаем список для Memory
+
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        Memory memory = snapshot.getValue(Memory.class);  // Получаем объект Memory из Firebase
+                        if (memory != null) {
+                            memoryList.add(memory);  // Добавляем объект в список
+                        }
+                    }
+
+                    // Преобразуем обновленный список обратно в JSON
+                    Gson gson = new Gson();
+                    String updatedJson = gson.toJson(memoryList);
+                    String fileName = "memories.json";
+
+                    // Записываем обновленный JSON обратно в файл
+                    FileOutputStream fos = null;
+                    OutputStreamWriter osw = null;
+                    try {
+                        fos = openFileOutput(fileName, Context.MODE_PRIVATE);
+                        osw = new OutputStreamWriter(fos);
+                        osw.write(updatedJson);
+                        Log.d("EditTaskActivity", "Memory list updated and saved to file: " + fileName);
+                    } catch (IOException e) {
+                        Log.e("EditTaskActivity", "Error writing to file: " + e.getMessage(), e);
+                    } finally {
+                        try {
+                            if (osw != null) osw.close();
+                            if (fos != null) fos.close();
+                        } catch (IOException e) {
+                            Log.e("EditTaskActivity", "Error closing file: " + e.getMessage(), e);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    // Обработка ошибок
+                }
+            });
         }
     }
 }

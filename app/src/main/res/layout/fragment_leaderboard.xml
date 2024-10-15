@@ -3,11 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".LeaderboardFragment"
     android:fitsSystemWindows="true"
     android:background="@color/forBackground"
     android:orientation="vertical">
 
+    <!-- Заголовок -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -15,26 +17,52 @@
         android:textSize="36sp"
         android:textColor="@color/forText"
         android:layout_margin="10dp"
+        android:paddingStart="10dp"
         android:fontFamily="@font/font3"/>
 
-    <!-- TODO: Update blank fragment layout -->
+    <!-- RecyclerView для списка -->
     <androidx.recyclerview.widget.RecyclerView
-        android:layout_marginTop="80dp"
-        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_marginTop="80dp"
+        android:id="@+id/recyclerView" />
 
-    <Button
-        android:layout_width="60dp"
-        android:layout_height="70dp"
-        android:text="+"
-        android:fontFamily="@font/font3"
-        android:textColor="@color/forBackground"
-        android:backgroundTint="@color/forText"
-        android:textSize="18sp"
+    <!-- Кнопка с плюсиком -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_plus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="50dp"/>
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="50dp"
+        android:src="@drawable/ic_plus"
+        app:tint="@color/forText"
+        app:backgroundTint="@color/forBackground"/>
 
+    <!-- Первая выпадающая кнопка -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="50dp"
+        android:visibility="gone"
+        android:src="@drawable/ic_id"
+        app:tint="@color/forText"
+        app:backgroundTint="@color/forBackground" />
+
+    <!-- Вторая выпадающая кнопка -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_qr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="50dp"
+        android:visibility="gone"
+        android:src="@drawable/ic_qr"
+        app:tint="@color/forText"
+        app:backgroundTint="@color/forBackground" />
 
 </FrameLayout>
