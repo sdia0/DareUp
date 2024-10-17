@@ -27,6 +27,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.security.SecureRandom;
+
 public class RegisterActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
 
@@ -91,8 +93,12 @@ public class RegisterActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             String uid = user.getUid();
+                            String randomString = generateRandomString(5);
 
-                            User newUser = new User(uid, name, 1, 0, "", "", ""); // Уровень 1 и очки 0
+                            // Создаем idForFriend, используя первые 6 символов UID и случайную строку
+                            String idForFriend = uid.substring(0, 6) + randomString;
+
+                            User newUser = new User(uid, name, 1, 0, "", "", "", idForFriend); // Уровень 1 и очки 0
 
                             mDatabase.child(uid).setValue(newUser)
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -115,6 +121,19 @@ public class RegisterActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+    private String generateRandomString(int length) {
+        final String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(length);
+
+        // Генерация случайных символов
+        for (int i = 0; i < length; i++) {
+            int randomIndex = random.nextInt(characters.length());
+            sb.append(characters.charAt(randomIndex));
+        }
+
+        return sb.toString();
     }
 
     private void sendVerificationEmail() {

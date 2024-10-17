@@ -20,7 +20,8 @@ public class Memory {
     }
 
     public String getId() {
-        return id;
+        if (id != null) return id;
+        else return "";
     }
 
     public void setId(String id) {
@@ -28,15 +29,18 @@ public class Memory {
     }
 
     public String getTitle() {
-        return title;
+        if (title != null) return title;
+        else return "";
     }
 
     public String getTask() {
-        return task;
+        if (task != null) return task;
+        else return "";
     }
 
     public String getDescription() {
-        return description;
+        if (description != null) return description;
+        else return "";
     }
 
     public boolean isExpanded() {

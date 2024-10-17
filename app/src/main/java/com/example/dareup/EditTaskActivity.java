@@ -56,6 +56,18 @@ public class EditTaskActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private DatabaseReference mDatabase;
 
+    private boolean canGoBack = false; // Флаг для контроля перехода назад
+
+    @Override
+    public void onBackPressed() {
+        if (canGoBack) {
+            super.onBackPressed(); // Если можно вернуться назад, вызываем super
+        } else {
+            // Здесь ничего не делаем или показываем сообщение
+            Toast.makeText(this, "Вы не можете вернуться на предыдущий экран", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,7 +112,6 @@ public class EditTaskActivity extends AppCompatActivity {
             }
         });
     }
-
 
     // Метод для подгрузки activeTask в TextView сразу при запуске активности
     private void fetchActiveTaskAndDisplay() {

@@ -170,9 +170,6 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
             databaseReference.removeValue().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Log.d("ExpandableMemoryAdapter", "Memory deleted from Firebase successfully.");
-
-                    // После удаления из Firebase удаляем из локального файла
-                    deleteMemoryFromFile(position);
                 } else {
                     Log.e("ExpandableMemoryAdapter", "Failed to delete memory from Firebase.", task.getException());
                 }

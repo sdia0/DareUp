@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,7 +88,6 @@ public class WelcomeActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Выполняем асинхронную проверку пользователя
                 loginUser(editLogin.getText().toString().trim(), editPassword.getText().toString().trim());
-                loadMemoriesAndSavetoFile();
             }
         });
 
@@ -133,6 +133,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
                             // Получаем данные пользователя из Realtime Database по UID
                             getUserDataFromFirebase(uid);
+                            getMemoriesFromFirebase(uid);
                         } else {
                             // Если вход не удался, показываем ошибку
                             Toast.makeText(WelcomeActivity.this, "Ошибка входа: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
@@ -155,9 +156,13 @@ public class WelcomeActivity extends AppCompatActivity {
                     String activeTaskDifficulty = snapshot.child("activeTaskDifficulty").getValue(String.class);
                     int xp = snapshot.child("xp").getValue(Integer.class);
                     int level = snapshot.child("level").getValue(Integer.class);
+                    String randomString = generateRandomString(5);
+
+                    // Создаем idForFriend, используя первые 6 символов UID и случайную строку
+                    String idForFriend = uid.substring(0, 6) + randomString;
 
                     // Создаем объект User для хранения данных
-                    User user = new User(id, name, level, xp, photoUrl, activeTask, activeTaskDifficulty);
+                    User user = new User(id, name, level, xp, photoUrl, activeTask, activeTaskDifficulty, idForFriend);
 
                     // Сохраняем данные пользователя локально
                     saveUserDataLocally(user);
@@ -176,6 +181,19 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
     }
+    private String generateRandomString(int length) {
+        final String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(length);
+
+        // Генерация случайных символов
+        for (int i = 0; i < length; i++) {
+            int randomIndex = random.nextInt(characters.length());
+            sb.append(characters.charAt(randomIndex));
+        }
+
+        return sb.toString();
+    }
 
     // Сохранение данных пользователя в локальный JSON-файл
     private void saveUserDataLocally(User user) {
@@ -188,58 +206,75 @@ public class WelcomeActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-    public void loadMemoriesAndSavetoFile() {
-        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+    // Получение данных пользователя из Firebase Realtime Database по UID
+    private void getMemoriesFromFirebase(String uid) {
+        mDatabase.child("memories").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    List<Memory> memoryList = new ArrayList<>();  // Создаем список для хранения всех memories
 
-        if (currentUser != null) {
-            // Получаем ID текущего пользователя
-            String userId = currentUser.getUid();
+                    // Проходим по каждому дочернему узлу (т.е. по каждому объекту Memory)
+                    for (DataSnapshot memorySnapshot : snapshot.getChildren()) {
+                        String title = memorySnapshot.child("title").getValue(String.class);
+                        String task = memorySnapshot.child("task").getValue(String.class);
+                        String description = memorySnapshot.child("description").getValue(String.class);
 
-            // Ссылка на конкретного пользователя в базе данных
-            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("memories").child(userId);
-            databaseReference.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    List<Memory> memoryList = new ArrayList<>();  // Создаем список для Memory
+                        if (title.isEmpty()) {
+                            title = "пусто";
 
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        Memory memory = snapshot.getValue(Memory.class);  // Получаем объект Memory из Firebase
-                        if (memory != null) {
-                            memoryList.add(memory);  // Добавляем объект в список
                         }
+                        if (task.isEmpty()) {
+                            task = "пусто";
+
+                        }
+                        if (description.isEmpty()) {
+                            description = "пусто";
+
+                        }
+                        Memory memory = new Memory("", title, task, description);
+
+                        // Добавляем объект Memory в список
+                        memoryList.add(memory);
                     }
 
-                    // Преобразуем обновленный список обратно в JSON
-                    Gson gson = new Gson();
-                    String updatedJson = gson.toJson(memoryList);
-                    String fileName = "memories.json";
-
-                    // Записываем обновленный JSON обратно в файл
-                    FileOutputStream fos = null;
-                    OutputStreamWriter osw = null;
-                    try {
-                        fos = openFileOutput(fileName, Context.MODE_PRIVATE);
-                        osw = new OutputStreamWriter(fos);
-                        osw.write(updatedJson);
-                        Log.d("EditTaskActivity", "Memory list updated and saved to file: " + fileName);
-                    } catch (IOException e) {
-                        Log.e("EditTaskActivity", "Error writing to file: " + e.getMessage(), e);
-                    } finally {
-                        try {
-                            if (osw != null) osw.close();
-                            if (fos != null) fos.close();
-                        } catch (IOException e) {
-                            Log.e("EditTaskActivity", "Error closing file: " + e.getMessage(), e);
-                        }
-                    }
+                    // Сохраняем список memories локально в JSON-файл
+                    saveMemoriesLocally(memoryList);
+                } else {
+                    Toast.makeText(WelcomeActivity.this, "Данные не найдены", Toast.LENGTH_SHORT).show();
                 }
+            }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    // Обработка ошибок
-                }
-            });
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("WelcomeActivity", "Ошибка чтения данных: " + error.getMessage());
+            }
+        });
+    }
+
+    // Сохранение данных пользователя в локальный JSON-файл
+    private void saveMemoriesLocally(List<Memory> memoryList) {
+        Gson gson = new Gson();
+        String updatedJson = gson.toJson(memoryList);
+        String fileName = "memories.json";
+
+        // Записываем обновленный JSON обратно в файл
+        FileOutputStream fos = null;
+        OutputStreamWriter osw = null;
+        try {
+            fos = openFileOutput(fileName, Context.MODE_PRIVATE);
+            osw = new OutputStreamWriter(fos);
+            osw.write(updatedJson);
+            Log.d("EditTaskActivity", "Memory list updated and saved to file: " + fileName);
+        } catch (IOException e) {
+            Log.e("EditTaskActivity", "Error writing to file: " + e.getMessage(), e);
+        } finally {
+            try {
+                if (osw != null) osw.close();
+                if (fos != null) fos.close();
+            } catch (IOException e) {
+                Log.e("EditTaskActivity", "Error closing file: " + e.getMessage(), e);
+            }
         }
     }
 }

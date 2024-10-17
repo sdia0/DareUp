@@ -1,5 +1,11 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <solid android:color="@color/forText"/> <!-- Цвет кнопки -->
-    <size android:width="50dp" android:height="50dp"/> <!-- Размер кнопки -->
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Слой с формой (овал) -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/forText"/> <!-- Цвет формы -->
+            <size android:width="50dp" android:height="50dp"/> <!-- Размер формы -->
+        </shape>
+    </item>
+
+</layer-list>

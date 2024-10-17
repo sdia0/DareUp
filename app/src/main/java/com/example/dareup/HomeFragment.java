@@ -492,9 +492,50 @@ public class HomeFragment extends Fragment {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
         if (currentUser != null) {
+            String uid = currentUser.getUid();
+
+            // Удаление данных из users по uid
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
+            userRef.removeValue().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    // После успешного удаления данных пользователя, удаляем сам аккаунт
+                    currentUser.delete().addOnCompleteListener(deleteTask -> {
+                        if (deleteTask.isSuccessful()) {
+                            Log.d("DeleteAccount", "Запись в таблице users успешно удалена");
+                        } else {
+                            // Ошибка при удалении
+                            Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    // Ошибка при удалении данных пользователя
+                    Toast.makeText(getActivity(), "Ошибка при удалении данных пользователя", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            userRef = FirebaseDatabase.getInstance().getReference("memories").child(uid);
+            userRef.removeValue().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    // После успешного удаления данных пользователя, удаляем сам аккаунт
+                    currentUser.delete().addOnCompleteListener(deleteTask -> {
+                        if (deleteTask.isSuccessful()) {
+                            Log.d("DeleteAccount", "Запись в таблице memories успешно удалена");
+                        } else {
+                            // Ошибка при удалении
+                            Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    // Ошибка при удалении данных пользователя
+                    Toast.makeText(getActivity(), "Ошибка при удалении данных пользователя", Toast.LENGTH_SHORT).show();
+                }
+            });
+
             // Удаление аккаунта
             currentUser.delete().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
+                    deleteFileUsingFileObject("memories.json");
+                    deleteFileUsingFileObject("user_data.json");
                     // Перенаправление на WelcomeActivity
                     Intent intent = new Intent(getActivity(), WelcomeActivity.class);
                     startActivity(intent);
@@ -505,6 +546,16 @@ public class HomeFragment extends Fragment {
                     Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
                 }
             });
+        }
+    }
+    public void deleteFileUsingFileObject(String fileName) {
+        File file = new File(requireActivity().getFilesDir(), fileName); // Получаем файл по его пути
+        boolean deleted = file.delete(); // Удаление файла
+
+        if (deleted) {
+            Log.d("FileDeletion", "Файл успешно удалён: " + fileName);
+        } else {
+            Log.e("FileDeletion", "Не удалось удалить файл: " + fileName);
         }
     }
 
