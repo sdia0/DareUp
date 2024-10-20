@@ -25,6 +25,8 @@ import java.util.List;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -111,6 +113,42 @@ public class EditTaskActivity extends AppCompatActivity {
                 finish();
             }
         });
+
+        // Добавляем TextWatcher для отслеживания изменений текста
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Не нужно ничего делать
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Вызывается, когда текст меняется
+                updateButtonState();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Не нужно ничего делать
+            }
+        };
+
+        etTitle.addTextChangedListener(textWatcher);
+        etNotes.addTextChangedListener(textWatcher);
+
+        // Вызов метода для обновления состояния кнопки при запуске активности
+        updateButtonState();
+    }
+
+    private void updateButtonState() {
+        // Проверяем, есть ли текст в обоих полях
+        if (!etTitle.getText().toString().isEmpty() && !etNotes.getText().toString().isEmpty()) {
+            btnSave.setAlpha(1.0f);  // Делает кнопку непрозрачной
+            btnSave.setEnabled(true); // Активирует кнопку
+        } else {
+            btnSave.setAlpha(0.5f);   // Делает кнопку полупрозрачной
+            btnSave.setEnabled(false); // Деактивирует кнопку
+        }
     }
 
     // Метод для подгрузки activeTask в TextView сразу при запуске активности

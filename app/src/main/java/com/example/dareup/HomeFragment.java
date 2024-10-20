@@ -7,11 +7,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,12 +29,15 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 
@@ -41,10 +46,13 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -164,8 +172,7 @@ public class HomeFragment extends Fragment {
                 if (difficultyLevel.equals("hard")) {
                     Intent intent = new Intent(getActivity(), CheckActivity.class);
                     startActivity(intent);
-                }
-                else {
+                } else {
                     FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
                     // Получаем текущего пользователя
@@ -188,20 +195,41 @@ public class HomeFragment extends Fragment {
         btnNewTask.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Сброс активного задания в базе данных
-                FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-
-                if (currentUser != null) {
-                    String userId = currentUser.getUid();
-                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users").child(userId);
-                    databaseReference.child("activeTask").setValue(""); // Устанавливаем пустую строку
-
-                    saveActiveTaskToFile("");
+                if (btnNewTask.getText().toString().equals("Выбор задания")) {
+                    setTries(4);
                 }
+                if (getTries() == 0) {
+                    //Toast.makeText(getActivity(), "Вы исчерпали количество попыток", Toast.LENGTH_SHORT).show();
+                    retryAfter = 60 * 1000;
+                    setTries(3);
+                    saveActiveTaskToFile("");
 
-                Intent intent = new Intent(getActivity(), DifficultyActivity.class);
-                startActivity(intent);
+                    //difficultyLevel = prefs1.getString("difficultyLevel", null); // Значение по умолчанию теперь null
+
+                    // Получаем текущее время
+                    long currentTime = System.currentTimeMillis();
+
+                    // Проверяем, есть ли сохраненное время окончания
+                    SharedPreferences prefs2 = getActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                    endTime[0] = prefs2.getLong(KEY_END_TIME, 0);
+
+                    // Проверяем, если retryAfter не равен 0
+                    if (endTime[0] > currentTime) {
+                        // Таймер активен
+                        long remainingTime = endTime[0] - currentTime;
+                        startCountDownTimer(remainingTime);
+                        disableButtons();
+                    } else {
+                        // Таймер неактивен, устанавливаем новое время окончания
+                        endTime[0] = currentTime + retryAfter; // Используем переданное значение retryAfter
+                        prefs2.edit().putLong(KEY_END_TIME, endTime[0]).apply();
+                        startCountDownTimer(retryAfter);
+                    }
+                }
+                else {
+                    Intent intent = new Intent(getActivity(), DifficultyActivity.class);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -264,6 +292,63 @@ public class HomeFragment extends Fragment {
         }*/
 
         return view;
+    }
+    public int getTries() {
+        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+
+                return userJson.getInt("tries");
+            }
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(getActivity(), "Произошла ошибка", Toast.LENGTH_SHORT).show();
+        return 3;
+    }
+    public void setTries(int tries) {
+        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+            }
+
+            userJson.put("tries", tries);
+
+            // Записываем обновленный объект JSON обратно в файл
+            FileWriter writer = new FileWriter(file);
+            writer.write(userJson.toString());
+            writer.close();
+
+            Log.d("FileWrite", "Данные пользователя сохранены в файл: " + userJson.toString());
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     private User loadUserDataFromFile() {
@@ -441,6 +526,8 @@ public class HomeFragment extends Fragment {
             // Обновляем или добавляем активное задание
             userJson.put("activeTask", activeTask);
 
+            //Toast.makeText(getActivity(), "Данные получены" + userJson.toString(), Toast.LENGTH_SHORT).show();
+
             // Записываем обновленный объект JSON обратно в файл
             FileWriter writer = new FileWriter(file);
             writer.write(userJson.toString());
@@ -454,6 +541,7 @@ public class HomeFragment extends Fragment {
 
     private void disableButtons() {
         completeTask.setEnabled(false);
+        completeTask.setAlpha(0.5f);
         btnNewTask.setAlpha(0.5f);
         btnNewTask.setEnabled(false);
     }
@@ -503,64 +591,92 @@ public class HomeFragment extends Fragment {
     // Метод для удаления аккаунта
     private void deleteAccount() {
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
-            String uid = currentUser.getUid();
+            String userEmail = currentUser.getEmail(); // Получаем email текущего пользователя
 
-            // Удаление данных из users по uid
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
-            userRef.removeValue().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    // После успешного удаления данных пользователя, удаляем сам аккаунт
-                    currentUser.delete().addOnCompleteListener(deleteTask -> {
-                        if (deleteTask.isSuccessful()) {
-                            Log.d("DeleteAccount", "Запись в таблице users успешно удалена");
+            // Показываем диалог для ввода пароля
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle("Подтвердите действие");
+
+            final EditText passwordInput = new EditText(getContext());
+            passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            builder.setView(passwordInput);
+
+            builder.setPositiveButton("Подтвердить", (dialog, which) -> {
+                String password = passwordInput.getText().toString().trim();
+
+                if (!password.isEmpty()) {
+                    // Создаем учетные данные для реаутентификации
+                    AuthCredential credential = EmailAuthProvider.getCredential(userEmail, password);
+
+                    // Реаутентификация
+                    currentUser.reauthenticate(credential).addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            // Успешная реаутентификация - теперь можно удалить аккаунт
+                            currentUser.delete().addOnCompleteListener(deleteTask -> {
+                                if (deleteTask.isSuccessful()) {
+                                    String uid = currentUser.getUid();
+
+                                    // Удаление данных из users по uid
+                                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
+                                    userRef.removeValue().addOnCompleteListener(task1 -> {
+                                        if (task1.isSuccessful()) {
+                                            // После успешного удаления данных пользователя, удаляем сам аккаунт
+                                            currentUser.delete().addOnCompleteListener(deleteTask1 -> {
+                                                if (deleteTask1.isSuccessful()) {
+                                                    Log.d("DeleteAccount", "Запись в таблице users успешно удалена");
+                                                } else {
+                                                    // Ошибка при удалении
+                                                    Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        } else {
+                                            // Ошибка при удалении данных пользователя
+                                            Toast.makeText(getActivity(), "Ошибка при удалении данных пользователя", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+
+                                    userRef = FirebaseDatabase.getInstance().getReference("memories").child(uid);
+                                    userRef.removeValue().addOnCompleteListener(task1 -> {
+                                        if (task1.isSuccessful()) {
+                                            // После успешного удаления данных пользователя, удаляем сам аккаунт
+                                            currentUser.delete().addOnCompleteListener(deleteTask1 -> {
+                                                if (deleteTask1.isSuccessful()) {
+                                                    Log.d("DeleteAccount", "Запись в таблице memories успешно удалена");
+                                                } else {
+                                                    // Ошибка при удалении
+                                                    Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        } else {
+                                            // Ошибка при удалении данных пользователя
+                                            Toast.makeText(getActivity(), "Ошибка при удалении данных пользователя", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                    deleteFileUsingFileObject("memories.json");
+                                    deleteFileUsingFileObject("user_data.json");
+                                    Intent intent = new Intent(getActivity(), WelcomeActivity.class);
+                                    startActivity(intent);
+                                    requireActivity().finish();
+                                } else {
+                                    Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         } else {
-                            // Ошибка при удалении
-                            Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), "Ошибка при реаутентификации. Неверный пароль.", Toast.LENGTH_SHORT).show();
                         }
                     });
                 } else {
-                    // Ошибка при удалении данных пользователя
-                    Toast.makeText(getActivity(), "Ошибка при удалении данных пользователя", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Введите пароль", Toast.LENGTH_SHORT).show();
                 }
             });
 
-            userRef = FirebaseDatabase.getInstance().getReference("memories").child(uid);
-            userRef.removeValue().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    // После успешного удаления данных пользователя, удаляем сам аккаунт
-                    currentUser.delete().addOnCompleteListener(deleteTask -> {
-                        if (deleteTask.isSuccessful()) {
-                            Log.d("DeleteAccount", "Запись в таблице memories успешно удалена");
-                        } else {
-                            // Ошибка при удалении
-                            Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    // Ошибка при удалении данных пользователя
-                    Toast.makeText(getActivity(), "Ошибка при удалении данных пользователя", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            // Удаление аккаунта
-            currentUser.delete().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    deleteFileUsingFileObject("memories.json");
-                    deleteFileUsingFileObject("user_data.json");
-                    // Перенаправление на WelcomeActivity
-                    Intent intent = new Intent(getActivity(), WelcomeActivity.class);
-                    startActivity(intent);
-                    requireActivity().finish(); // Завершить текущую активность
-                    Toast.makeText(getActivity(), "Аккаунт успешно удален", Toast.LENGTH_SHORT).show();
-                } else {
-                    // Ошибка при удалении
-                    Toast.makeText(getActivity(), "Ошибка при удалении аккаунта", Toast.LENGTH_SHORT).show();
-                }
-            });
+            builder.setNegativeButton("Отмена", (dialog, which) -> dialog.cancel());
+            builder.show();
         }
+
     }
     public void deleteFileUsingFileObject(String fileName) {
         File file = new File(requireActivity().getFilesDir(), fileName); // Получаем файл по его пути

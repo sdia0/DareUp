@@ -163,6 +163,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
                     // Создаем объект User для хранения данных
                     User user = new User(id, name, level, xp, photoUrl, activeTask, activeTaskDifficulty, idForFriend);
+                    user.setTries(3);
 
                     // Сохраняем данные пользователя локально
                     saveUserDataLocally(user);

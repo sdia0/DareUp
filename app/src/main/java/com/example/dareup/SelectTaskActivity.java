@@ -37,7 +37,7 @@ public class SelectTaskActivity extends AppCompatActivity {
     private TextView tvTask;
     private Button btnNo, btnYes;
     private String difficultyLevel;
-    private int attemptsRemaining = 3;
+    private int currentTries;
     private long retryAfter = 60 * 1000;
     private CountDownTimer countDownTimer;
     private String selectedTask; // Хранит выбранное задание
@@ -57,15 +57,20 @@ public class SelectTaskActivity extends AppCompatActivity {
         // Загрузка задания при создании активности
         loadRandomTask();
 
+        decrementTries();
+
         btnNo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (attemptsRemaining > 0) {
-                    attemptsRemaining--;
+                if (currentTries > 0) {
+                    decrementTries();
                     loadRandomTask();
                 } else {
                     // Уведомляем пользователя о завершении попыток
                     Toast.makeText(SelectTaskActivity.this, "Вы исчерпали все попытки! Попробуйте позже.", Toast.LENGTH_SHORT).show();
+                    currentTries = 3;
+                    saveActiveTaskToFile("", "");
+                    resetTries();
                     startRetryTimer();
                 }
             }
@@ -91,6 +96,75 @@ public class SelectTaskActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+    }
+    // Метод для уменьшения значения tries на 1
+    public void decrementTries() {
+        File file = new File(getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+            }
+
+            currentTries = userJson.getInt("tries");
+            if (currentTries > 0) {
+                currentTries--;
+            }
+            Toast.makeText(this, "У вас осталось попыток: " + currentTries, Toast.LENGTH_SHORT).show();
+
+            userJson.put("tries", currentTries);
+
+            // Записываем обновленный объект JSON обратно в файл
+            FileWriter writer = new FileWriter(file);
+            writer.write(userJson.toString());
+            writer.close();
+
+            Log.d("FileWrite", "Данные пользователя сохранены в файл: " + userJson.toString());
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
+    public void resetTries() {
+        File file = new File(getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+            }
+
+            userJson.put("tries", 3);
+
+            // Записываем обновленный объект JSON обратно в файл
+            FileWriter writer = new FileWriter(file);
+            writer.write(userJson.toString());
+            writer.close();
+
+            Log.d("FileWrite", "Данные пользователя сохранены в файл: " + userJson.toString());
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
     }
     private boolean canGoBack = false; // Флаг для контроля перехода назад
 
@@ -139,9 +213,96 @@ public class SelectTaskActivity extends AppCompatActivity {
 
     private void startRetryTimer() {
         btnNo.setEnabled(false); // Деактивируем кнопку "другое задание"
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+
+        // Получаем текущего пользователя
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+        // Проверяем, существует ли текущий пользователь
+        if (currentUser != null) {
+            String userId = currentUser.getUid(); // Получаем ID текущего пользователя
+            int xpToMinus = getXpForDifficulty(difficultyLevel); // Implement this method based on your logic
+            minusXp(userId, xpToMinus);
+            Toast.makeText(this, "Минус " + xpToMinus + "xp", Toast.LENGTH_SHORT).show();
+        } else {
+            Log.d("UID", "Пользователь не авторизован");
+        }
         Intent intent = new Intent(SelectTaskActivity.this, MainActivity.class);
         intent.putExtra("retryAfter", retryAfter); // Передача значения retryAfter через Intent
         startActivity(intent);
+    }
+    private int getXpForDifficulty(String difficultyLevel) {
+        switch (difficultyLevel) {
+            case "easy":
+                return 5; // XP for easy
+            case "medium":
+                return 10; // XP for medium
+            case "hard":
+                return 20; // XP for hard
+            default:
+                return 0; // No XP if the difficultyLevel is unknown
+        }
+    }
+    private void minusXp(String userId, int xpToMinus) {
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference("users").child(userId);
+
+        database.child("xp").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Integer currentXp = task.getResult().getValue(Integer.class);
+
+                if (currentXp != null) {
+                    int newXp = currentXp - xpToMinus;
+                    if (newXp < 0) newXp = 0;
+                    database.child("xp").setValue(newXp).addOnCompleteListener(updateTask -> {
+                        if (updateTask.isSuccessful()) {
+                            Log.d("FirebaseUpdate", "XP обновлено успешно!");
+                        } else {
+                            Log.d("FirebaseUpdate", "Ошибка обновления XP: " + updateTask.getException());
+                        }
+                    });
+                    saveXpToFile(newXp);
+                } else {
+                    Toast.makeText(this, "Текущие XP не найдены.", Toast.LENGTH_SHORT).show();
+                    Log.d("FirebaseGetXP", "Текущие XP не найдены");
+                }
+            } else {
+                Toast.makeText(this, "Не удалось получить текущие XP.", Toast.LENGTH_SHORT).show();
+                Log.d("FirebaseGetXP", "Ошибка получения XP: " + task.getException());
+            }
+        });
+    }
+
+    private void saveXpToFile(int xp) {
+        File file = new File(getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+            }
+
+            // Обновляем или добавляем активное задание
+            userJson.put("xp", xp);
+
+            // Записываем обновленный объект JSON обратно в файл
+            FileWriter writer = new FileWriter(file);
+            writer.write(userJson.toString());
+            writer.close();
+
+            Log.d("FileWrite", "Данные пользователя сохранены в файл: " + userJson.toString());
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     private void saveActiveTaskToFile(String activeTask, String activeTaskDifficulty) {

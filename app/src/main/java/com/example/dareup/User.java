@@ -2,10 +2,9 @@ package com.example.dareup;
 
 public class User {
     String id, name, photoUrl, activeTask, activeTaskDifficulty, idForFriend;
-    int level, xp;
+    int level, xp, tries;
 
     public User() {}
-
     public User(String id, String name, int level, int xp, String photoUrl, String activeTask, String activeTaskDifficulty, String idForFriend) {
         this.id = id;
         this.name = name;
@@ -15,6 +14,14 @@ public class User {
         this.activeTask = activeTask;
         this.activeTaskDifficulty = activeTaskDifficulty;
         this.idForFriend = idForFriend;
+    }
+
+    public int getTries() {
+        return tries;
+    }
+
+    public void setTries(int tries) {
+        this.tries = tries;
     }
 
     public String getIdForFriend() {

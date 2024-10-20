@@ -92,7 +92,9 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
             // Добавляем обработчик клика для раскрытия/сворачивания элемента
             itemView.setOnClickListener(v -> {
                 Memory memory = memoryList.get(getAdapterPosition());
-                memory.setExpanded(!memory.isExpanded());  // Меняем состояние "развернут/свернут"
+                if (!(memory.getTask().isEmpty() || memory.getDescription().isEmpty())) {
+                    memory.setExpanded(!memory.isExpanded());  // Меняем состояние "развернут/свернут"
+                }
                 notifyItemChanged(getAdapterPosition());
             });
         }
