@@ -118,9 +118,7 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
             }
         }
         private void deleteMemoryFromFile(int position) {
-            // Прочитать существующий JSON-файл
             List<Memory> memoryList = new ArrayList<>();
-
             String fileName = "memories.json";
 
             // Чтение файла
@@ -129,13 +127,10 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
 
                 StringBuilder builder = new StringBuilder();
                 String line;
-
-                // Чтение строки за строкой и добавление в StringBuilder
                 while ((line = reader.readLine()) != null) {
                     builder.append(line);
                 }
 
-                // Преобразование прочитанного текста в список Memory
                 String json = builder.toString();
                 if (!json.isEmpty()) {
                     Type memoryListType = new TypeToken<ArrayList<Memory>>() {}.getType();
@@ -145,38 +140,54 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
                 Log.e("ExpandableMemoryAdapter", "Error reading file: " + e.getMessage(), e);
             }
 
-            // Удаляем элемент по позиции
+            // Проверяем, что позиция валидна
             if (position >= 0 && position < memoryList.size()) {
+                Memory memoryToDelete = memoryList.get(position);  // Сохраняем память для удаления из Firebase
+
+                // Удаляем элемент из списка локально
                 memoryList.remove(position);
-            }
 
-            // Преобразуем обновленный список обратно в JSON
-            String updatedJson = new Gson().toJson(memoryList);
-
-            // Записываем обновленный JSON обратно в файл
-            try (FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
-                 OutputStreamWriter osw = new OutputStreamWriter(fos)) {
-                osw.write(updatedJson);
-                Log.d("ExpandableMemoryAdapter", "Memory list updated and saved to file: " + fileName);
-            } catch (IOException e) {
-                Log.e("ExpandableMemoryAdapter", "Error writing to file: " + e.getMessage(), e);
-            }
-
-            Memory memoryToDelete = memoryList.get(position);
-            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // Получаем ID пользователя
-
-            // Удаляем запись из Firebase
-            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("memories").child(userId).child(memoryToDelete.getId());
-            databaseReference.removeValue().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    Log.d("ExpandableMemoryAdapter", "Memory deleted from Firebase successfully.");
-                } else {
-                    Log.e("ExpandableMemoryAdapter", "Failed to delete memory from Firebase.", task.getException());
+                // Преобразуем обновленный список обратно в JSON и сохраняем локально
+                String updatedJson = new Gson().toJson(memoryList);
+                try (FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
+                     OutputStreamWriter osw = new OutputStreamWriter(fos)) {
+                    osw.write(updatedJson);
+                    Log.d("ExpandableMemoryAdapter", "Memory list updated and saved to file: " + fileName);
+                } catch (IOException e) {
+                    Log.e("ExpandableMemoryAdapter", "Error writing to file: " + e.getMessage(), e);
                 }
-            });
 
-            // Обновляем данные в адаптере
-            updateData(memoryList);
+                // Обновляем адаптер, чтобы изменения отобразились сразу на экране
+                updateData(memoryList);
+
+                // Удаляем запись из Firebase асинхронно
+                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("memories")
+                        .child(userId).child(memoryToDelete.getId());
+
+                List<Memory> finalMemoryList = memoryList;
+                databaseReference.removeValue().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("ExpandableMemoryAdapter", "Memory deleted from Firebase successfully.");
+                    } else {
+                        Log.e("ExpandableMemoryAdapter", "Failed to delete memory from Firebase.", task.getException());
+
+                        // В случае ошибки можно добавить логику восстановления удалённого элемента
+                        // Например, показать уведомление пользователю или вернуть запись в список.
+                        finalMemoryList.add(position, memoryToDelete); // Восстанавливаем запись локально
+                        String restoredJson = new Gson().toJson(finalMemoryList);
+                        try (FileOutputStream fosRestore = context.openFileOutput(fileName, Context.MODE_PRIVATE);
+                             OutputStreamWriter oswRestore = new OutputStreamWriter(fosRestore)) {
+                            oswRestore.write(restoredJson);
+                        } catch (IOException e) {
+                            Log.e("ExpandableMemoryAdapter", "Error restoring deleted memory: " + e.getMessage(), e);
+                        }
+                        updateData(finalMemoryList); // Обновляем адаптер снова
+                    }
+                });
+            } else {
+                Log.e("ExpandableMemoryAdapter", "Invalid position: " + position);
+            }
         }
     }
 }

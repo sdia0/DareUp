@@ -3,17 +3,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     android:background="@color/forBackground">
 
+    <!-- Заголовок -->
     <TextView
-        android:layout_marginTop="20dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/font3"
-        android:padding="10dp"
         android:text="Воспоминания"
+        android:textSize="36sp"
         android:textColor="@color/forText"
-        android:textSize="36sp"/>
+        android:layout_margin="10dp"
+        android:paddingStart="10dp"
+        android:fontFamily="@font/font3"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"

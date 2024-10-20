@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".CheckActivity"
+    android:orientation="vertical"
+    android:background="@color/forBackground">
+
+    <!-- Заголовок -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Проверка"
+        android:textSize="36sp"
+        android:textColor="@color/forText"
+        android:layout_margin="10dp"
+        android:paddingStart="10dp"
+        android:fontFamily="@font/font3"/>
+
+    <TextView
+        android:id="@+id/tvLoadCheck"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:background="@drawable/load_photo"
+        android:fontFamily="@font/font3"
+        android:textSize="25sp"
+        android:textColor="@color/forText"
+        android:gravity="center"
+        android:layout_margin="16dp"
+        android:padding="15dp"/>
+
+    <Button
+        android:id="@+id/btnContinue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:alpha="0.5"
+        android:text="Продолжить"
+        android:backgroundTint="@color/forText"
+        android:textColor="@color/forBackground"
+        android:fontFamily="@font/font3"
+        android:textSize="25sp"
+        android:layout_margin="16dp"/>
+
+</LinearLayout>

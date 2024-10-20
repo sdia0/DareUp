@@ -33,6 +33,9 @@ android {
 }
 
 dependencies {
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.zxing:core:3.4.1")
+    implementation("junit:junit:4.13.2")
     implementation("nl.dionsegijn:konfetti-xml:2.0.0@aar")
     implementation("nl.dionsegijn:konfetti-core:2.0.2")
     implementation("androidx.preference:preference:1.2.0")

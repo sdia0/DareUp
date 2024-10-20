@@ -124,24 +124,64 @@ public class HomeFragment extends Fragment {
             }
         });
 
+        User user = loadUserDataFromFile();
+        if (user != null) {
+            // Установка данных в текстовые поля
+            nickname.setText(user.getName());
+            level.setText("Level: " + user.getLevel());
+            xp.setText(user.getXp() + "xp");
+
+            // Загружаем изображение профиля
+            Glide.with(requireContext())
+                    .load(user.getPhotoUrl())
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .override(300, 300)
+                    .centerCrop()
+                    .circleCrop()
+                    .into(ibProfilePicture);
+
+            // Установка задания из поля activeTask
+            String activeTask = user.getActiveTask();
+            difficultyLevel = user.getActiveTaskDifficulty();
+            if (activeTask != null && !activeTask.isEmpty()) {
+                tvTask.setText(activeTask);
+                btnNewTask.setText("Другое задание");
+            } else {
+                tvTask.setText("Нет активного задания");
+                completeTask.setEnabled(false);
+                completeTask.setAlpha(0.5f);
+                btnNewTask.setText("Выбор задания");
+            }
+            if (difficultyLevel.equals("hard")) completeTask.setText("Проверить");
+            else completeTask.setText("Выполнить");
+        } else {
+            Toast.makeText(getActivity(), "Не удалось загрузить данные о пользователе", Toast.LENGTH_SHORT).show();
+        }
+
         completeTask.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-
-                // Получаем текущего пользователя
-                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-
-                // Проверяем, существует ли текущий пользователь
-                if (currentUser != null) {
-                    String userId = currentUser.getUid(); // Получаем ID текущего пользователя
-                    int xpToAdd = getXpForDifficulty(difficultyLevel); // Implement this method based on your logic
-                    addXpToUserAndResetTask(userId, xpToAdd);
-                } else {
-                    Log.d("UID", "Пользователь не авторизован");
+                if (difficultyLevel.equals("hard")) {
+                    Intent intent = new Intent(getActivity(), CheckActivity.class);
+                    startActivity(intent);
                 }
-                Intent intent = new Intent(getActivity(), WinnerActivity.class);
-                startActivity(intent);
+                else {
+                    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+
+                    // Получаем текущего пользователя
+                    FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+                    // Проверяем, существует ли текущий пользователь
+                    if (currentUser != null) {
+                        String userId = currentUser.getUid(); // Получаем ID текущего пользователя
+                        int xpToAdd = getXpForDifficulty(difficultyLevel); // Implement this method based on your logic
+                        addXpToUserAndResetTask(userId, xpToAdd);
+                    } else {
+                        Log.d("UID", "Пользователь не авторизован");
+                    }
+                    Intent intent = new Intent(getActivity(), WinnerActivity.class);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -171,35 +211,6 @@ public class HomeFragment extends Fragment {
                 resetTimer();
             }
         });
-
-        User user = loadUserDataFromFile();
-        if (user != null) {
-            // Установка данных в текстовые поля
-            nickname.setText(user.getName());
-            level.setText("Level: " + user.getLevel());
-            xp.setText(user.getXp() + "xp");
-
-            // Загружаем изображение профиля
-            Glide.with(requireContext())
-                    .load(user.getPhotoUrl())
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .override(300, 300)
-                    .centerCrop()
-                    .circleCrop()
-                    .into(ibProfilePicture);
-
-            // Установка задания из поля activeTask
-            String activeTask = user.getActiveTask();
-            difficultyLevel = user.getActiveTaskDifficulty();
-            if (activeTask != null && !activeTask.isEmpty()) {
-                tvTask.setText(activeTask);
-            } else {
-                tvTask.setText("Выбрать задание");
-                completeTask.setEnabled(false);
-            }
-        } else {
-            Toast.makeText(getActivity(), "Не удалось загрузить данные о пользователе", Toast.LENGTH_SHORT).show();
-        }
 
         /*FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
@@ -443,12 +454,15 @@ public class HomeFragment extends Fragment {
 
     private void disableButtons() {
         completeTask.setEnabled(false);
+        btnNewTask.setAlpha(0.5f);
         btnNewTask.setEnabled(false);
     }
 
     private void enableButtons() {
-        completeTask.setEnabled(true);
+        tvTask.setText("Нет активного задания");
+        btnNewTask.setText("Выбор задания");
         btnNewTask.setEnabled(true);
+        btnNewTask.setAlpha(1.0f);
         //Toast.makeText(getActivity(), "Вы можете снова выбирать задания!", Toast.LENGTH_SHORT).show();
     }
 
