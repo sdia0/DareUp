@@ -242,7 +242,7 @@ public class WelcomeActivity extends AppCompatActivity {
                     // Сохраняем список memories локально в JSON-файл
                     saveMemoriesLocally(memoryList);
                 } else {
-                    Toast.makeText(WelcomeActivity.this, "Данные не найдены", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(WelcomeActivity.this, "Данные не найдены", Toast.LENGTH_SHORT).show();
                 }
             }
 

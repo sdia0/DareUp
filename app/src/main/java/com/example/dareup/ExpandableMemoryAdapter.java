@@ -37,6 +37,7 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
         this.memoryList = memoryList;
         this.context = context;
     }
+    public ExpandableMemoryAdapter() { }
 
     @NonNull
     @Override

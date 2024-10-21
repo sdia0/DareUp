@@ -59,7 +59,6 @@ public class CheckActivity extends AppCompatActivity {
     Button btnCompleteCheck;
     private static final int CAMERA_REQUEST_CODE = 101;
     // Состояние, определяющее, какую операцию мы хотим выполнить
-    private String currentCheckAction;
 
     private void requestLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -87,11 +86,7 @@ public class CheckActivity extends AppCompatActivity {
         if (requestCode == CAMERA_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Проверяем, что должно быть сделано: сканирование QR-кода или фотография
-                if (currentCheckAction.equals("qr")) {
-                    startQrCodeScanner(); // Начинаем сканирование
-                } else if (currentCheckAction.equals("photo")) {
-                    capturePhoto(); // Делаем фотографию
-                }
+                startQrCodeScanner(); // Начинаем сканирование
             } else {
                 Toast.makeText(this, "Разрешение на использование камеры отклонено", Toast.LENGTH_SHORT).show();
             }
@@ -153,10 +148,6 @@ public class CheckActivity extends AppCompatActivity {
                 if (check[0].equals("Проверить местоположение")) {
                     requestLocationPermission();
                 } else if (check[0].equals("Сканировать qr-код")) {
-                    currentCheckAction = "qr"; // Устанавливаем текущее действие
-                    requestCameraPermission();
-                } else if (check[0].equals("Сделать фото")) {
-                    currentCheckAction = "photo"; // Устанавливаем текущее действие
                     requestCameraPermission();
                 } else {
                     Toast.makeText(CheckActivity.this, "Бла-бла", Toast.LENGTH_SHORT).show();
@@ -179,12 +170,7 @@ public class CheckActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
         } else {
-            // Если разрешение уже предоставлено, вызываем нужное действие
-            if (currentCheckAction.equals("qr")) {
-                startQrCodeScanner();
-            } else if (currentCheckAction.equals("photo")) {
-                capturePhoto();
-            }
+            startQrCodeScanner();
         }
     }
     private void capturePhoto() {
@@ -214,29 +200,8 @@ public class CheckActivity extends AppCompatActivity {
                 String scannedText = result.getContents();
                 confirmScannedCode(scannedText);
             }
-        } else if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            if (imageBitmap != null) {
-                //processImage(imageBitmap); // Обработка изображения
-            }
         }
     }
-    /*private void processImage(Bitmap imageBitmap) {
-        // Преобразование Bitmap в Mat для анализа с использованием OpenCV
-        Mat img = new Mat();
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, 640, 480, false);
-        Utils.bitmapToMat(resizedBitmap, img);
-
-        // Анализ изображения
-        boolean isSunset = analyzeImageForSunset(img);
-
-        if (isSunset) {
-            Toast.makeText(this, "Это закат!", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Это не закат.", Toast.LENGTH_SHORT).show();
-        }
-    }*/
     private void confirmScannedCode(String scannedText) {
         // Логика подтверждения совпадения отсканированного кода
         // Например, сравнение с заранее известным кодом
