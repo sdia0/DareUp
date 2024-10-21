@@ -28,6 +28,8 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RegisterActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
@@ -97,8 +99,9 @@ public class RegisterActivity extends AppCompatActivity {
 
                             // Создаем idForFriend, используя первые 6 символов UID и случайную строку
                             String idForFriend = uid.substring(0, 6) + randomString;
+                            List<String> blankList = new ArrayList<>();
 
-                            User newUser = new User(uid, name, 1, 0, "", "", "", idForFriend); // Уровень 1 и очки 0
+                            User newUser = new User(uid, name, 1, 0, "", "", "", idForFriend, blankList); // Уровень 1 и очки 0
 
                             mDatabase.child(uid).setValue(newUser)
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {

@@ -17,17 +17,12 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.MenuItem; // Импорт для MenuItem
-import android.widget.PopupMenu; // Импорт для PopupMenu
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.example.dareup.R;
+
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
@@ -37,7 +32,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Transaction;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 
@@ -46,26 +41,23 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Objects;
+import java.util.List;
 
 public class HomeFragment extends Fragment {
     private Button btnNewTask, completeTask, btnResetTimer; // Добавлена кнопка сброса
     private TextView tvTask, nickname, xp, level;
     private CountDownTimer countDownTimer;
     private long retryAfter; // Время в миллисекундах, полученное из другой активности
-    String difficultyLevel;
+    String difficultyLevel, id;
     private long[] endTime = new long[1]; // Время окончания таймера
     private static final String PREFS_NAME = "TimerPrefs";
     private static final String KEY_END_TIME = "end_time";
     ImageButton ibProfilePicture;
+    String activeTask;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -138,6 +130,7 @@ public class HomeFragment extends Fragment {
             nickname.setText(user.getName());
             level.setText("Level: " + user.getLevel());
             xp.setText(user.getXp() + "xp");
+            id = user.getId();
 
             // Загружаем изображение профиля
             Glide.with(requireContext())
@@ -149,7 +142,7 @@ public class HomeFragment extends Fragment {
                     .into(ibProfilePicture);
 
             // Установка задания из поля activeTask
-            String activeTask = user.getActiveTask();
+            activeTask = user.getActiveTask();
             difficultyLevel = user.getActiveTaskDifficulty();
             if (activeTask != null && !activeTask.isEmpty()) {
                 tvTask.setText(activeTask);
@@ -170,8 +163,44 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (difficultyLevel.equals("hard")) {
-                    Intent intent = new Intent(getActivity(), CheckActivity.class);
-                    startActivity(intent);
+                    final String[] check = new String[1];
+                    // Получаем ссылку на задачи
+                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("tasks").child("hard");
+
+                    // Запрос на поиск задачи по полю "description"
+                    Query query = databaseReference.orderByChild("description").equalTo(activeTask);
+                    query.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            // Проверяем, существует ли такой узел
+                            if (dataSnapshot.exists()) {
+                                for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
+                                    // Получаем значение поля "check" для найденной задачи
+                                    check[0] = taskSnapshot.child("check").getValue(String.class);
+                                    if (check[0] != null) {
+                                        if (check[0].equals("Сделать фото")) {
+                                            Intent intent = new Intent(getActivity(), AiCheckActivity.class);
+                                            startActivity(intent);
+                                        }
+                                        else {
+                                            Intent intent = new Intent(getActivity(), CheckActivity.class);
+                                            startActivity(intent);
+                                        }
+                                    }
+                                    else {
+                                        Log.d("Firebase", "check value is not 'heo'");
+                                    }
+                                }
+                            } else {
+                                Log.d("Firebase", "Task not found");
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Log.e("Firebase", "Error occurred: " + databaseError.getMessage());
+                        }
+                    });
                 } else {
                     FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
@@ -199,9 +228,10 @@ public class HomeFragment extends Fragment {
                     setTries(4);
                 }
                 if (getTries() == 0) {
-                    //Toast.makeText(getActivity(), "Вы исчерпали количество попыток", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Вы исчерпали количество попыток", Toast.LENGTH_SHORT).show();
                     retryAfter = 60 * 1000;
                     setTries(3);
+                    addCompletedTaskToFirebase(id);
                     saveActiveTaskToFile("");
 
                     //difficultyLevel = prefs1.getString("difficultyLevel", null); // Значение по умолчанию теперь null
@@ -450,14 +480,18 @@ public class HomeFragment extends Fragment {
 
                 if (currentXp != null) {
                     int newXp = currentXp + xpToAdd;
-                    database.child("xp").setValue(newXp).addOnCompleteListener(updateTask -> {
-                        if (updateTask.isSuccessful()) {
-                            Log.d("FirebaseUpdate", "XP обновлено успешно!");
-                        } else {
-                            Log.d("FirebaseUpdate", "Ошибка обновления XP: " + updateTask.getException());
-                        }
-                    });
-                    saveXpToFile(newXp);
+
+                    // Если XP превысили 100, сначала обновляем уровень
+                    if (newXp >= 100) {
+                        int levelsGained = newXp / 100;  // Сколько уровней прибавить
+                        newXp = newXp % 100;             // Остаток XP после повышения уровня
+
+                        // Сначала обновляем уровень
+                        updateUserLevel(database, levelsGained, newXp);
+                    } else {
+                        // Если XP меньше 100, просто обновляем XP
+                        updateXp(database, newXp);
+                    }
                 } else {
                     Toast.makeText(getActivity(), "Текущие XP не найдены.", Toast.LENGTH_SHORT).show();
                     Log.d("FirebaseGetXP", "Текущие XP не найдены");
@@ -467,7 +501,54 @@ public class HomeFragment extends Fragment {
                 Log.d("FirebaseGetXP", "Ошибка получения XP: " + task.getException());
             }
         });
+
+        addCompletedTaskToFirebase(id);
         saveActiveTaskToFile("");
+    }
+
+    // Метод для обновления уровня и последующего обновления XP
+    private void updateUserLevel(DatabaseReference database, int levelsGained, int newXp) {
+        database.child("level").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Integer currentLevel = task.getResult().getValue(Integer.class);
+
+                if (currentLevel != null) {
+                    int newLevel = currentLevel + levelsGained;
+
+                    // Обновляем уровень пользователя
+                    database.child("level").setValue(newLevel).addOnCompleteListener(updateTask -> {
+                        if (updateTask.isSuccessful()) {
+                            Log.d("FirebaseUpdate", "Уровень обновлен до: " + newLevel);
+
+                            // После успешного обновления уровня вызываем сохранение уровня локально
+                            saveLevelToFile(newLevel);
+
+                            // После успешного обновления уровня обновляем XP
+                            updateXp(database, newXp);
+                        } else {
+                            Log.d("FirebaseUpdate", "Ошибка обновления уровня: " + updateTask.getException());
+                        }
+                    });
+                } else {
+                    Log.d("FirebaseGetLevel", "Текущий уровень не найден");
+                }
+            } else {
+                Log.d("FirebaseGetLevel", "Ошибка получения уровня: " + task.getException());
+            }
+        });
+    }
+
+    // Метод для обновления XP
+    private void updateXp(DatabaseReference database, int newXp) {
+        database.child("xp").setValue(newXp).addOnCompleteListener(updateTask -> {
+            if (updateTask.isSuccessful()) {
+                Log.d("FirebaseUpdate", "XP обновлено успешно!");
+            } else {
+                Log.d("FirebaseUpdate", "Ошибка обновления XP: " + updateTask.getException());
+            }
+        });
+
+        saveXpToFile(newXp);
     }
 
     private void saveXpToFile(int xp) {
@@ -491,6 +572,39 @@ public class HomeFragment extends Fragment {
 
             // Обновляем или добавляем активное задание
             userJson.put("xp", xp);
+
+            // Записываем обновленный объект JSON обратно в файл
+            FileWriter writer = new FileWriter(file);
+            writer.write(userJson.toString());
+            writer.close();
+
+            Log.d("FileWrite", "Данные пользователя сохранены в файл: " + userJson.toString());
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveLevelToFile(int level) {
+        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+            }
+
+            // Обновляем или добавляем активное задание
+            userJson.put("level", level);
 
             // Записываем обновленный объект JSON обратно в файл
             FileWriter writer = new FileWriter(file);
@@ -537,6 +651,41 @@ public class HomeFragment extends Fragment {
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
+    }
+    private void addCompletedTaskToFirebase(String userId) {
+        DatabaseReference completedTasksRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("completed_tasks");
+
+        completedTasksRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<String> completedTasks = new ArrayList<>();
+
+                // Если уже есть выполненные задания, получаем их
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
+                        String existingTask = taskSnapshot.getValue(String.class);
+                        completedTasks.add(existingTask);
+                    }
+                }
+
+                // Добавляем новое задание в список
+                completedTasks.add(activeTask);
+
+                // Обновляем список выполненных заданий в Firebase
+                completedTasksRef.setValue(completedTasks).addOnCompleteListener(updateTask -> {
+                    if (updateTask.isSuccessful()) {
+                        Log.d("FirebaseUpdate", "Выполненное задание добавлено.");
+                    } else {
+                        Log.d("FirebaseUpdate", "Ошибка добавления задания: " + updateTask.getException());
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.d("FirebaseError", "Ошибка при чтении данных: " + databaseError.getMessage());
+            }
+        });
     }
 
     private void disableButtons() {

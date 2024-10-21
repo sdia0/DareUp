@@ -177,6 +177,7 @@ public class SelectTaskActivity extends AppCompatActivity {
             Toast.makeText(this, "Вы не можете вернуться на предыдущий экран", Toast.LENGTH_SHORT).show();
         }
     }
+    private List<String> usedTasks = new ArrayList<>(); // Список использованных заданий
     private void loadRandomTask() {
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("tasks");
 
@@ -189,21 +190,32 @@ public class SelectTaskActivity extends AppCompatActivity {
 
                     for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
                         String taskDescription = taskSnapshot.child("description").getValue(String.class);
-                        tasksList.add(taskDescription);
+
+                        // Если задание еще не использовано, добавляем его в список
+                        if (!usedTasks.contains(taskDescription)) {
+                            tasksList.add(taskDescription);
+                        }
                     }
 
-                    // Выбор случайного задания
+                    // Проверяем, есть ли доступные задания, которые не были использованы
                     if (!tasksList.isEmpty()) {
                         Random random = new Random();
                         int randomIndex = random.nextInt(tasksList.size());
                         selectedTask = tasksList.get(randomIndex); // Сохраняем описание задания
-                        tvTask.setText(selectedTask); // Обновляем текст задания на экране
+
+                        // Обновляем текст задания на экране
+                        tvTask.setText(selectedTask);
+
+                        // Добавляем выбранное задание в список использованных
+                        usedTasks.add(selectedTask);
+                    } else {
+                        // Если все задания уже использованы
+                        Toast.makeText(SelectTaskActivity.this, "Все задания для этого уровня сложности уже были выполнены.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(SelectTaskActivity.this, "Нет доступных заданий для этого уровня сложности.", Toast.LENGTH_SHORT).show();
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Toast.makeText(SelectTaskActivity.this, "Ошибка: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();

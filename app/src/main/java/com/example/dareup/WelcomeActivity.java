@@ -160,9 +160,10 @@ public class WelcomeActivity extends AppCompatActivity {
 
                     // Создаем idForFriend, используя первые 6 символов UID и случайную строку
                     String idForFriend = uid.substring(0, 6) + randomString;
+                    List<String> blankList = new ArrayList<>();
 
                     // Создаем объект User для хранения данных
-                    User user = new User(id, name, level, xp, photoUrl, activeTask, activeTaskDifficulty, idForFriend);
+                    User user = new User(id, name, level, xp, photoUrl, activeTask, activeTaskDifficulty, idForFriend, blankList);
                     user.setTries(3);
 
                     // Сохраняем данные пользователя локально

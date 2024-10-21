@@ -33,6 +33,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.mlkit:image-labeling:17.0.9")
     implementation("com.google.guava:guava:30.1.1-android")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.google.zxing:core:3.4.1")

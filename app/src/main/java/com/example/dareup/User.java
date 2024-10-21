@@ -1,11 +1,14 @@
 package com.example.dareup;
 
+import java.util.List;
+
 public class User {
     String id, name, photoUrl, activeTask, activeTaskDifficulty, idForFriend;
     int level, xp, tries;
+    private List<String> completedTasks;
 
     public User() {}
-    public User(String id, String name, int level, int xp, String photoUrl, String activeTask, String activeTaskDifficulty, String idForFriend) {
+    public User(String id, String name, int level, int xp, String photoUrl, String activeTask, String activeTaskDifficulty, String idForFriend, List<String> completedTasks) {
         this.id = id;
         this.name = name;
         this.level = level;
@@ -14,6 +17,7 @@ public class User {
         this.activeTask = activeTask;
         this.activeTaskDifficulty = activeTaskDifficulty;
         this.idForFriend = idForFriend;
+        this.completedTasks = completedTasks;
     }
 
     public int getTries() {

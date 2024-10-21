@@ -57,6 +57,7 @@ public class CheckActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     TextView tvCheck;
     Button btnCompleteCheck;
+    String check_prompt, check;
     private static final int CAMERA_REQUEST_CODE = 101;
     // Состояние, определяющее, какую операцию мы хотим выполнить
 
@@ -109,8 +110,6 @@ public class CheckActivity extends AppCompatActivity {
             Toast.makeText(this, "Не удалось загрузить данные о пользователе", Toast.LENGTH_SHORT).show();
             return; // Выйти из метода, если данные о пользователе не загружены
         }
-
-        final String[] check = new String[1];
         // Получаем ссылку на задачи
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("tasks").child("hard");
 
@@ -123,9 +122,10 @@ public class CheckActivity extends AppCompatActivity {
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
                         // Получаем значение поля "check" для найденной задачи
-                        check[0] = taskSnapshot.child("check").getValue(String.class);
-                        if (check[0] != null) {
-                            tvCheck.setText(check[0]);
+                        check = taskSnapshot.child("check").getValue(String.class);
+                        check_prompt = taskSnapshot.child("check_prompt").getValue(String.class);
+                        if (check != null) {
+                            tvCheck.setText(check);
                         }
                         else {
                             Log.d("Firebase", "check value is not 'heo'");
@@ -145,9 +145,9 @@ public class CheckActivity extends AppCompatActivity {
         tvCheck.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (check[0].equals("Проверить местоположение")) {
+                if (check.equals("Проверить местоположение")) {
                     requestLocationPermission();
-                } else if (check[0].equals("Сканировать qr-код")) {
+                } else if (check.equals("Сканировать qr-код")) {
                     requestCameraPermission();
                 } else {
                     Toast.makeText(CheckActivity.this, "Бла-бла", Toast.LENGTH_SHORT).show();
@@ -203,15 +203,14 @@ public class CheckActivity extends AppCompatActivity {
         }
     }
     private void confirmScannedCode(String scannedText) {
-        // Логика подтверждения совпадения отсканированного кода
-        // Например, сравнение с заранее известным кодом
-        String expectedCode = "Squirrel";
-
-        if (scannedText.equals(expectedCode)) {
-            success();
-        } else {
-            Toast.makeText(this, "Код не совпадает!", Toast.LENGTH_SHORT).show();
+        if (check_prompt != null) {
+            if (scannedText.equals(check_prompt)) {
+                success();
+            } else {
+                Toast.makeText(this, "Код не совпадает!", Toast.LENGTH_SHORT).show();
+            }
         }
+        else Toast.makeText(this, "Check_prompt is null", Toast.LENGTH_SHORT).show();
     }
     private int getXpForDifficulty(String difficultyLevel) {
         switch (difficultyLevel) {
@@ -346,21 +345,20 @@ public class CheckActivity extends AppCompatActivity {
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
     private void checkLocation(double userLatitude, double userLongitude) {
-        // Пример целевых координат (замените на свои)
-        double targetLatitude = 42.863880;
-        double targetLongitude = 74.541785;
+        if (check_prompt != null) {
+            String[] array = check_prompt.split(" ");
+            double targetLatitude = Double.parseDouble(array[0]);
+            double targetLongitude = Double.parseDouble(array[1]);
 
-        // Проверка на близость к целевым координатам (можно изменить логику проверки)
-        float[] results = new float[1];
-        Location.distanceBetween(userLatitude, userLongitude, targetLatitude, targetLongitude, results);
-        float distanceInMeters = results[0];
+            // Проверка на близость к целевым координатам (можно изменить логику проверки)
+            float[] results = new float[1];
+            Location.distanceBetween(userLatitude, userLongitude, targetLatitude, targetLongitude, results);
+            float distanceInMeters = results[0];
 
-        if (distanceInMeters < 10) { // 10 метров, вы можете изменить это значение
-            success();
-            //Toast.makeText(this, "Вы находитесь в пределах 10 метров от цели!", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Местоположение", Toast.LENGTH_SHORT).show();
+            if (distanceInMeters < 100) success();
+            else Toast.makeText(CheckActivity.this, "Местоположение", Toast.LENGTH_SHORT).show();
         }
+        else Toast.makeText(this, "Check_prompt is null", Toast.LENGTH_SHORT).show();
     }
     void success() {
         btnCompleteCheck.setEnabled(true);

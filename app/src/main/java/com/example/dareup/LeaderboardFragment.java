@@ -66,7 +66,19 @@ public class LeaderboardFragment extends Fragment {
                     }
                 }
 
-                users.sort((user1, user2) -> Integer.compare(user2.getXp(), user1.getXp()));
+                users.sort((user1, user2) -> {
+                    // Сначала сравниваем уровни
+                    int levelComparison = Integer.compare(user2.getLevel(), user1.getLevel());
+
+                    // Если уровни одинаковые, сравниваем XP
+                    if (levelComparison == 0) {
+                        return Integer.compare(user2.getXp(), user1.getXp());
+                    }
+
+                    // Если уровни не одинаковые, возвращаем результат сравнения уровней
+                    return levelComparison;
+                });
+
 
                 // Обновляем адаптер с новыми данными
                 if (adapter == null) {
