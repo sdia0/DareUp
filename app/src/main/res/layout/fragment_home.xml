@@ -63,7 +63,6 @@
 
     <TextView
         android:id="@+id/tvTask"
-        android:text="Пройти 10000 шагов"
         android:layout_width="350dp"
         android:layout_height="300dp"
         android:textColor="@color/forText"

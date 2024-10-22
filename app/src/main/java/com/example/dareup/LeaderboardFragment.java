@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LeaderboardFragment extends Fragment {
-
     private List<User> users;
     private DatabaseReference databaseReference;
     private RecyclerView recyclerView;

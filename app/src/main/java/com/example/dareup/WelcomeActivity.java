@@ -103,9 +103,48 @@ public class WelcomeActivity extends AppCompatActivity {
         btnContinue.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
+                // Создаем фиктивного пользователя
+                createLocalUserAndMemories();
+
+                // Устанавливаем флаг, что пользователь вошел в систему
+                SharedPreferences preferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putBoolean("isLoggedIn", true);
+                editor.apply();
+
+                Intent intent = new Intent(WelcomeActivity.this, MainActivity.class);
+                intent.putExtra("showLeaderboard", false); // Установите false, чтобы скрыть LeaderboardFragment
+                startActivity(intent);
             }
         });
+    }
+    // Метод для создания фиктивного пользователя и сохранения локально
+    private void createLocalUserAndMemories() {
+        // Создаем фиктивного пользователя с тестовыми данными
+        String id = "local_user";
+        String name = "Guest User";
+        int defaultPictureResId = R.drawable.default_profile_picture;
+        String photoUrl = "android.resource://" + getPackageName() + "/" + defaultPictureResId;
+        String activeTask = "";
+        String activeTaskDifficulty = "";
+        int xp = 0;
+        int level = 1;
+        String randomString = generateRandomString(5);
+
+        // Генерация idForFriend для гостевого пользователя
+        String idForFriend = "guest" + randomString;
+        List<String> blankList = new ArrayList<>();
+
+        // Создаем объект User для гостевого пользователя
+        User localUser = new User(id, name, level, xp, photoUrl, activeTask, activeTaskDifficulty, idForFriend, blankList);
+        localUser.setTries(2);
+
+        // Сохраняем данные пользователя локально
+        saveUserDataLocally(localUser, "user_data_locally.json");
+
+        // Создаем пустой список воспоминаний
+        List<Memory> emptyMemoriesList = new ArrayList<>();
+        saveMemoriesLocally(emptyMemoriesList, "memories_locally.json");
     }
 
     // Метод для входа пользователя
@@ -164,10 +203,10 @@ public class WelcomeActivity extends AppCompatActivity {
 
                     // Создаем объект User для хранения данных
                     User user = new User(id, name, level, xp, photoUrl, activeTask, activeTaskDifficulty, idForFriend, blankList);
-                    user.setTries(3);
+                    user.setTries(2);
 
                     // Сохраняем данные пользователя локально
-                    saveUserDataLocally(user);
+                    saveUserDataLocally(user, "user_data.json");
 
                     // Переход на MainActivity
                     startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
@@ -198,9 +237,9 @@ public class WelcomeActivity extends AppCompatActivity {
     }
 
     // Сохранение данных пользователя в локальный JSON-файл
-    private void saveUserDataLocally(User user) {
+    private void saveUserDataLocally(User user, String fileName) {
         try {
-            File file = new File(getFilesDir(), "user_data.json");
+            File file = new File(getFilesDir(), fileName);
             FileWriter writer = new FileWriter(file);
             writer.write(new Gson().toJson(user)); // Преобразование объекта User в JSON и запись в файл
             writer.close();
@@ -241,7 +280,7 @@ public class WelcomeActivity extends AppCompatActivity {
                     }
 
                     // Сохраняем список memories локально в JSON-файл
-                    saveMemoriesLocally(memoryList);
+                    saveMemoriesLocally(memoryList, "memories.json");
                 } else {
                     //Toast.makeText(WelcomeActivity.this, "Данные не найдены", Toast.LENGTH_SHORT).show();
                 }
@@ -255,10 +294,9 @@ public class WelcomeActivity extends AppCompatActivity {
     }
 
     // Сохранение данных пользователя в локальный JSON-файл
-    private void saveMemoriesLocally(List<Memory> memoryList) {
+    private void saveMemoriesLocally(List<Memory> memoryList, String fileName) {
         Gson gson = new Gson();
         String updatedJson = gson.toJson(memoryList);
-        String fileName = "memories.json";
 
         // Записываем обновленный JSON обратно в файл
         FileOutputStream fos = null;

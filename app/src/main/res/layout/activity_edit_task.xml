@@ -8,9 +8,7 @@
     tools:context=".EditTaskActivity"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:background="@color/forBackground"
-    android:layout_gravity="center"
-    android:layout_margin="10dp">
+    android:background="@color/forBackground">
 
     <!-- Заголовок -->
     <TextView

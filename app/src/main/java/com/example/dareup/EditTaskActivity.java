@@ -287,7 +287,7 @@ public class EditTaskActivity extends AppCompatActivity {
         }
 
         // Добавляем новый объект Memory в список
-        memoryList.add(newMemory);
+        memoryList.add(0, newMemory);
 
         // Преобразуем обновленный список обратно в JSON
         Gson gson = new Gson();

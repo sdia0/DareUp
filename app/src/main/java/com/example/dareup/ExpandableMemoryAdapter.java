@@ -159,7 +159,6 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
                 } catch (IOException e) {
                     Log.e("ExpandableMemoryAdapter", "Error writing to file: " + e.getMessage(), e);
                 }
-
                 // Обновляем адаптер, чтобы изменения отобразились сразу на экране
                 updateData(memoryList);
 

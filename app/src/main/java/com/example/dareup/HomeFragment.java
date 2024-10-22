@@ -63,6 +63,20 @@ public class HomeFragment extends Fragment {
         // Required empty public constructor
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateData(); // Метод для обновления данных
+    }
+
+    private void updateData() {
+        User user = loadUserDataFromFile();
+        if (user != null) {
+            id = user.getId();
+            level.setText("Level: " + user.getLevel());
+            xp.setText(user.getXp() + "xp");
+        }
+    }
     public static HomeFragment newInstance(long retryAfter) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
@@ -88,6 +102,13 @@ public class HomeFragment extends Fragment {
         level = view.findViewById(R.id.level);
         nickname = view.findViewById(R.id.nickname);
         xp = view.findViewById(R.id.xp);
+
+        tvTask.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetTimer();
+            }
+        });
 
         // Получение времени из аргументов
         if (getArguments() != null) {
@@ -225,12 +246,12 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (btnNewTask.getText().toString().equals("Выбор задания")) {
-                    setTries(4);
+                    setTries(3);
                 }
                 if (getTries() == 0) {
                     Toast.makeText(getActivity(), "Вы исчерпали количество попыток", Toast.LENGTH_SHORT).show();
                     retryAfter = 60 * 1000;
-                    setTries(3);
+                    setTries(2);
                     addCompletedTaskToFirebase(id);
                     saveActiveTaskToFile("");
 

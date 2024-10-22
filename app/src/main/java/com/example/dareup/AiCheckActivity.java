@@ -286,14 +286,18 @@ public class AiCheckActivity extends AppCompatActivity {
 
                 if (currentXp != null) {
                     int newXp = currentXp + xpToAdd;
-                    database.child("xp").setValue(newXp).addOnCompleteListener(updateTask -> {
-                        if (updateTask.isSuccessful()) {
-                            Log.d("FirebaseUpdate", "XP обновлено успешно!");
-                        } else {
-                            Log.d("FirebaseUpdate", "Ошибка обновления XP: " + updateTask.getException());
-                        }
-                    });
-                    updateFile(newXp);
+
+                    // Если XP превысили 100, сначала обновляем уровень
+                    if (newXp >= 100) {
+                        int levelsGained = newXp / 100;  // Сколько уровней прибавить
+                        newXp = newXp % 100;             // Остаток XP после повышения уровня
+
+                        // Сначала обновляем уровень
+                        updateUserLevel(database, levelsGained, newXp);
+                    } else {
+                        // Если XP меньше 100, просто обновляем XP
+                        updateXp(database, newXp);
+                    }
                 } else {
                     Toast.makeText(this, "Текущие XP не найдены.", Toast.LENGTH_SHORT).show();
                     Log.d("FirebaseGetXP", "Текущие XP не найдены");
@@ -303,9 +307,89 @@ public class AiCheckActivity extends AppCompatActivity {
                 Log.d("FirebaseGetXP", "Ошибка получения XP: " + task.getException());
             }
         });
+        saveActiveTaskToFile("");
+    }
+    private void saveActiveTaskToFile(String activeTask) {
+        File file = new File(getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+            }
+
+            // Обновляем или добавляем активное задание
+            userJson.put("activeTask", activeTask);
+
+            //Toast.makeText(getActivity(), "Данные получены" + userJson.toString(), Toast.LENGTH_SHORT).show();
+
+            // Записываем обновленный объект JSON обратно в файл
+            FileWriter writer = new FileWriter(file);
+            writer.write(userJson.toString());
+            writer.close();
+
+            Log.d("FileWrite", "Данные пользователя сохранены в файл: " + userJson.toString());
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
+    // Метод для обновления уровня и последующего обновления XP
+    private void updateUserLevel(DatabaseReference database, int levelsGained, int newXp) {
+        database.child("level").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Integer currentLevel = task.getResult().getValue(Integer.class);
+
+                if (currentLevel != null) {
+                    int newLevel = currentLevel + levelsGained;
+
+                    // Обновляем уровень пользователя
+                    database.child("level").setValue(newLevel).addOnCompleteListener(updateTask -> {
+                        if (updateTask.isSuccessful()) {
+                            Log.d("FirebaseUpdate", "Уровень обновлен до: " + newLevel);
+
+                            // После успешного обновления уровня вызываем сохранение уровня локально
+                            saveLevelToFile(newLevel);
+
+                            // После успешного обновления уровня обновляем XP
+                            updateXp(database, newXp);
+                        } else {
+                            Log.d("FirebaseUpdate", "Ошибка обновления уровня: " + updateTask.getException());
+                        }
+                    });
+                } else {
+                    Log.d("FirebaseGetLevel", "Текущий уровень не найден");
+                }
+            } else {
+                Log.d("FirebaseGetLevel", "Ошибка получения уровня: " + task.getException());
+            }
+        });
     }
 
-    private void updateFile(int xp) {
+    // Метод для обновления XP
+    private void updateXp(DatabaseReference database, int newXp) {
+        database.child("xp").setValue(newXp).addOnCompleteListener(updateTask -> {
+            if (updateTask.isSuccessful()) {
+                Log.d("FirebaseUpdate", "XP обновлено успешно!");
+            } else {
+                Log.d("FirebaseUpdate", "Ошибка обновления XP: " + updateTask.getException());
+            }
+        });
+
+        saveXpToFile(newXp);
+    }
+
+    private void saveXpToFile(int xp) {
         File file = new File(getFilesDir(), "user_data.json");
         JSONObject userJson = new JSONObject();
         try {
@@ -326,7 +410,38 @@ public class AiCheckActivity extends AppCompatActivity {
 
             // Обновляем или добавляем активное задание
             userJson.put("xp", xp);
-            userJson.put("activeTask", "");
+
+            // Записываем обновленный объект JSON обратно в файл
+            FileWriter writer = new FileWriter(file);
+            writer.write(userJson.toString());
+            writer.close();
+
+            Log.d("FileWrite", "Данные пользователя сохранены в файл: " + userJson.toString());
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
+    private void saveLevelToFile(int level) {
+        File file = new File(getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+            }
+
+            // Обновляем или добавляем активное задание
+            userJson.put("level", level);
 
             // Записываем обновленный объект JSON обратно в файл
             FileWriter writer = new FileWriter(file);
