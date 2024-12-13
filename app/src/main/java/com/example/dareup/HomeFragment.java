@@ -225,7 +225,7 @@ public class HomeFragment extends Fragment {
                                     // Получаем значение поля "check" для найденной задачи
                                     check[0] = taskSnapshot.child("check").getValue(String.class);
                                     if (check[0] != null) {
-                                        if (check[0].equals("Сделать фото")) {
+                                        if (check[0].equals("photo")) {
                                             Intent intent = new Intent(getActivity(), AiCheckActivity.class);
                                             startActivity(intent);
                                         }

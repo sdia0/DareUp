@@ -119,7 +119,7 @@ public class CheckActivity extends AppCompatActivity {
                     for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
                         // Получаем значение поля "check" для найденной задачи
                         check = taskSnapshot.child("check").getValue(String.class);
-                        check_prompt = taskSnapshot.child("check_prompt").getValue(String.class);
+                        check_prompt = taskSnapshot.child("prompt").getValue(String.class);
                         if (check != null) {
                             tvCheck.setText(check);
                         }
@@ -199,6 +199,30 @@ public class CheckActivity extends AppCompatActivity {
         }
     }
     private void confirmScannedCode(String scannedText) {
+        // Получаем ссылку на задачи
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("tasks").child("hard");
+
+        // Запрос на поиск задачи по полю "description"
+        Query query = databaseReference.orderByChild("description").equalTo(activeTask);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // Проверяем, существует ли такой узел
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
+                        // Получаем значение поля "check" для найденной задачи
+                        check_prompt = taskSnapshot.child("prompt").getValue(String.class);
+                    }
+                } else {
+                    Log.d("Firebase", "Task not found");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e("Firebase", "Error occurred: " + databaseError.getMessage());
+            }
+        });
         if (check_prompt != null) {
             if (scannedText.equals(check_prompt)) {
                 success();
@@ -341,6 +365,30 @@ public class CheckActivity extends AppCompatActivity {
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
     private void checkLocation(double userLatitude, double userLongitude) {
+        // Получаем ссылку на задачи
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("tasks").child("hard");
+
+        // Запрос на поиск задачи по полю "description"
+        Query query = databaseReference.orderByChild("description").equalTo(activeTask);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // Проверяем, существует ли такой узел
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
+                        // Получаем значение поля "check" для найденной задачи
+                        check_prompt = taskSnapshot.child("prompt").getValue(String.class);
+                    }
+                } else {
+                    Log.d("Firebase", "Task not found");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e("Firebase", "Error occurred: " + databaseError.getMessage());
+            }
+        });
         if (check_prompt != null) {
             String[] array = check_prompt.split(" ");
             double targetLatitude = Double.parseDouble(array[0]);

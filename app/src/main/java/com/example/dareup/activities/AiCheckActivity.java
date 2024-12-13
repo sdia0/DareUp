@@ -64,6 +64,7 @@ public class AiCheckActivity extends AppCompatActivity {
     private Uri image_uri;
     ImageLabeler labeler;
     String difficultyLevel, activeTask, check_prompt;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,7 +95,7 @@ public class AiCheckActivity extends AppCompatActivity {
                 // Проверяем, существует ли такой узел
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
-                        check_prompt = taskSnapshot.child("check_prompt").getValue(String.class);
+                        check_prompt = taskSnapshot.child("prompt").getValue(String.class);
                     }
                 } else {
                     Log.d("Firebase", "Task not found");
@@ -110,17 +111,15 @@ public class AiCheckActivity extends AppCompatActivity {
         tvCheck.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (checkSelfPermission(android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED || checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            == PackageManager.PERMISSION_DENIED){
+                            == PackageManager.PERMISSION_DENIED) {
                         String[] permission = {android.Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
                         requestPermissions(permission, PERMISSION_CODE);
-                    }
-                    else {
+                    } else {
                         openCamera();
                     }
-                }
-                else {
+                } else {
                     openCamera();
                 }
             }
@@ -136,6 +135,7 @@ public class AiCheckActivity extends AppCompatActivity {
 
         labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS);
     }
+
     private void openCamera() {
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.TITLE, "New Picture");
@@ -166,14 +166,14 @@ public class AiCheckActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
 
-        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && data != null){
+        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && data != null) {
             image_uri = data.getData();
             //innerImage.setImageURI(image_uri);
             Bitmap bitmap = uriToBitmap(image_uri);
             doInference(bitmap);
         }
 
-        if (requestCode == IMAGE_CAPTURE_CODE && resultCode == RESULT_OK){
+        if (requestCode == IMAGE_CAPTURE_CODE && resultCode == RESULT_OK) {
             //innerImage.setImageURI(image_uri);
             Bitmap bitmap = uriToBitmap(image_uri);
             doInference(bitmap);
@@ -181,7 +181,7 @@ public class AiCheckActivity extends AppCompatActivity {
 
     }
 
-    public void doInference(Bitmap input){
+    public void doInference(Bitmap input) {
         Bitmap rotated = rotateBitmap(input);
         InputImage image = InputImage.fromBitmap(rotated, 0);
 
@@ -194,14 +194,19 @@ public class AiCheckActivity extends AppCompatActivity {
                             String text = label.getText();
                             float confidence = label.getConfidence();
                             //int index = label.getIndex();
-                            if (text.equals(check_prompt) && confidence > 50) {
+                            if (text.equals(check_prompt) && confidence > 0.5) {
+                                // Toast.makeText(AiCheckActivity.this, text, Toast.LENGTH_SHORT).show();
                                 success();
                                 break;
+                            } else {
+                                // Toast.makeText(AiCheckActivity.this, check_prompt + " " + text, Toast.LENGTH_SHORT).show();
+                                flag = false;
                             }
-                            else flag = false;
                             //resultTv.append(text + "      " + confidence + "\n");
                         }
-                        if (!flag) Toast.makeText(AiCheckActivity.this, "Проверка не пройдена...", Toast.LENGTH_SHORT).show();
+                        if (!flag) {
+                            Toast.makeText(AiCheckActivity.this, "Проверка не пройдена...", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -216,17 +221,17 @@ public class AiCheckActivity extends AppCompatActivity {
     //TODO rotate image if image captured on sumsong devices
     //Most phone cameras are landscape, meaning if you take the photo in portrait, the resulting photos will be rotated 90 degrees.
     @SuppressLint("Range")
-    public Bitmap rotateBitmap(Bitmap input){
+    public Bitmap rotateBitmap(Bitmap input) {
         String[] orientationColumn = {MediaStore.Images.Media.ORIENTATION};
         Cursor cur = getContentResolver().query(image_uri, orientationColumn, null, null, null);
         int orientation = -1;
         if (cur != null && cur.moveToFirst()) {
             orientation = cur.getInt(cur.getColumnIndex(orientationColumn[0]));
         }
-        Log.d("tryOrientation",orientation+"");
+        Log.d("tryOrientation", orientation + "");
         Matrix rotationMatrix = new Matrix();
         rotationMatrix.setRotate(orientation);
-        Bitmap cropped = Bitmap.createBitmap(input,0,0, input.getWidth(), input.getHeight(), rotationMatrix, true);
+        Bitmap cropped = Bitmap.createBitmap(input, 0, 0, input.getWidth(), input.getHeight(), rotationMatrix, true);
         return cropped;
     }
 
@@ -243,8 +248,9 @@ public class AiCheckActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return  null;
+        return null;
     }
+
     void success() {
         btnCompleteCheck.setEnabled(true);
         btnCompleteCheck.setAlpha(1.0f);
@@ -265,6 +271,7 @@ public class AiCheckActivity extends AppCompatActivity {
             addXpToUserAndResetTask(userId, xpToAdd);
         }
     }
+
     private int getXpForDifficulty(String difficultyLevel) {
         switch (difficultyLevel) {
             case "easy":
@@ -277,6 +284,7 @@ public class AiCheckActivity extends AppCompatActivity {
                 return 0; // No XP if the difficultyLevel is unknown
         }
     }
+
     private void addXpToUserAndResetTask(String userId, int xpToAdd) {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference("users").child(userId);
 
@@ -338,6 +346,7 @@ public class AiCheckActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
     private User loadUserDataFromFile() {
         User user = null;
         try {
