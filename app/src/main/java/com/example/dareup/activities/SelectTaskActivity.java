@@ -1,7 +1,6 @@
-package com.example.dareup;
+package com.example.dareup.activities;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
@@ -13,6 +12,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.dareup.MainActivity;
+import com.example.dareup.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -241,6 +242,7 @@ public class SelectTaskActivity extends AppCompatActivity {
         }
         Intent intent = new Intent(SelectTaskActivity.this, MainActivity.class);
         intent.putExtra("retryAfter", retryAfter); // Передача значения retryAfter через Intent
+        intent.putExtra("updateNeeded", true);  // Указываем, что нужно обновить фрагмент
         startActivity(intent);
     }
     private int getXpForDifficulty(String difficultyLevel) {
@@ -255,7 +257,7 @@ public class SelectTaskActivity extends AppCompatActivity {
                 return 0; // No XP if the difficultyLevel is unknown
         }
     }
-    private void minusXp(String userId, int xpToMinus) {
+    private void minusXp(String userId, int xpToSubtract) {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference("users").child(userId);
 
         database.child("xp").get().addOnCompleteListener(task -> {
@@ -263,16 +265,37 @@ public class SelectTaskActivity extends AppCompatActivity {
                 Integer currentXp = task.getResult().getValue(Integer.class);
 
                 if (currentXp != null) {
-                    int newXp = currentXp - xpToMinus;
-                    if (newXp < 0) newXp = 0;
-                    database.child("xp").setValue(newXp).addOnCompleteListener(updateTask -> {
-                        if (updateTask.isSuccessful()) {
-                            Log.d("FirebaseUpdate", "XP обновлено успешно!");
-                        } else {
-                            Log.d("FirebaseUpdate", "Ошибка обновления XP: " + updateTask.getException());
-                        }
-                    });
-                    saveXpToFile(newXp);
+                    int[] newXp = new int[1];
+                    newXp[0] = currentXp - xpToSubtract;
+
+                    // Если XP уходит в минус
+                    if (newXp[0] < 0) {
+                        int xpShortfall = Math.abs(newXp[0]); // на сколько XP ушли в минус
+                        database.child("level").get().addOnCompleteListener(levelTask -> {
+                            if (levelTask.isSuccessful()) {
+                                Integer currentLevel = levelTask.getResult().getValue(Integer.class);
+
+                                if (currentLevel != null && currentLevel > 0) {
+                                    int newLevel = currentLevel - 1; // Понижаем уровень
+
+                                    // Новые XP для предыдущего уровня
+                                    newXp[0] = 100 - xpShortfall;
+
+                                    // Обновляем уровень и XP
+                                    updateUserLevelAndXp(database, newLevel, newXp[0]);
+                                } else {
+                                    // Если уровень уже минимальный, XP становится 0
+                                    updateXp(database, 0);
+                                    Toast.makeText(this, "Минимальный уровень достигнут.", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Log.d("FirebaseGetLevel", "Ошибка получения уровня: " + levelTask.getException());
+                            }
+                        });
+                    } else {
+                        // Если XP не ушли в минус, просто обновляем XP
+                        updateXp(database, newXp[0]);
+                    }
                 } else {
                     Toast.makeText(this, "Текущие XP не найдены.", Toast.LENGTH_SHORT).show();
                     Log.d("FirebaseGetXP", "Текущие XP не найдены");
@@ -284,6 +307,30 @@ public class SelectTaskActivity extends AppCompatActivity {
         });
     }
 
+    // Метод для обновления уровня и XP
+    private void updateUserLevelAndXp(DatabaseReference database, int newLevel, int newXp) {
+        database.child("level").setValue(newLevel).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Log.d("FirebaseUpdate", "Уровень понижен до: " + newLevel);
+                saveLevelToFile(newLevel); // Локальное сохранение уровня
+                updateXp(database, newXp);  // Обновляем XP после успешного обновления уровня
+            } else {
+                Log.d("FirebaseUpdate", "Ошибка обновления уровня: " + task.getException());
+            }
+        });
+    }
+
+    // Метод для обновления XP
+    private void updateXp(DatabaseReference database, int newXp) {
+        database.child("xp").setValue(newXp).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Log.d("FirebaseUpdate", "XP обновлено успешно!");
+            } else {
+                Log.d("FirebaseUpdate", "Ошибка обновления XP: " + task.getException());
+            }
+        });
+        saveXpToFile(newXp);  // Локальное сохранение XP
+    }
     private void saveXpToFile(int xp) {
         File file = new File(getFilesDir(), "user_data.json");
         JSONObject userJson = new JSONObject();
@@ -316,7 +363,38 @@ public class SelectTaskActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+    private void saveLevelToFile(int level) {
+        File file = new File(getFilesDir(), "user_data.json");
+        JSONObject userJson = new JSONObject();
+        try {
+            // Проверяем, существует ли файл, и если да, читаем его
+            if (file.exists()) {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
 
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                // Создаем объект JSON из строки
+                userJson = new JSONObject(jsonBuilder.toString());
+            }
+
+            // Обновляем или добавляем активное задание
+            userJson.put("level", level);
+
+            // Записываем обновленный объект JSON обратно в файл
+            FileWriter writer = new FileWriter(file);
+            writer.write(userJson.toString());
+            writer.close();
+
+            Log.d("FileWrite", "Данные пользователя сохранены в файл: " + userJson.toString());
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
     private void saveActiveTaskToFile(String activeTask, String activeTaskDifficulty) {
         File file = new File(SelectTaskActivity.this.getFilesDir(), "user_data.json");
         JSONObject userJson = new JSONObject();

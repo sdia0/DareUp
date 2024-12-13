@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "448485506942",
-    "project_id": "dareup-f7072",
-    "storage_bucket": "dareup-f7072.appspot.com"
+    "project_number": "386296058573",
+    "project_id": "dareupp-d0c13",
+    "storage_bucket": "dareupp-d0c13.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:448485506942:android:610c2a9abc68167c75bd2f",
+        "mobilesdk_app_id": "1:386296058573:android:284de1ac51e29724a30f84",
         "android_client_info": {
           "package_name": "com.example.dareup"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCR4yYKcatvnearbh_uxjqplQJZuYccUVc"
+          "current_key": "AIzaSyBpA7-LYcqnlx5gLmpeQK8uDXxpr4pcLEs"
         }
       ],
       "services": {

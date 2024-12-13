@@ -25,35 +25,35 @@
         android:theme="@style/Theme.DareUp"
         tools:targetApi="31">
         <activity
-            android:name=".AiCheckActivity"
+            android:name=".activities.AiCheckActivity"
             android:exported="false" />
         <activity
-            android:name=".CheckActivity"
+            android:name=".activities.CheckActivity"
             android:exported="false" />
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="fullSensor"
             tools:replace="screenOrientation" />
         <activity
-            android:name=".EditTaskActivity"
+            android:name=".activities.EditTaskActivity"
             android:exported="false" />
         <activity
-            android:name=".DifficultyActivity"
+            android:name=".activities.DifficultyActivity"
             android:exported="false" />
         <activity
-            android:name=".SelectTaskActivity"
+            android:name=".activities.SelectTaskActivity"
             android:exported="false" />
         <activity
-            android:name=".WinnerActivity"
+            android:name=".activities.WinnerActivity"
             android:exported="false" />
         <activity
-            android:name=".RegisterActivity"
+            android:name=".activities.RegisterActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity
-            android:name=".WelcomeActivity"
+            android:name=".activities.WelcomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

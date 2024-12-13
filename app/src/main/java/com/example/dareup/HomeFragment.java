@@ -24,6 +24,12 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.example.dareup.activities.WinnerActivity;
+import com.example.dareup.entities.User;
+import com.example.dareup.activities.WelcomeActivity;
+import com.example.dareup.activities.AiCheckActivity;
+import com.example.dareup.activities.CheckActivity;
+import com.example.dareup.activities.DifficultyActivity;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
@@ -71,6 +77,38 @@ public class HomeFragment extends Fragment {
         return fragment;
     }
 
+    private void updateXpAndLevelUI() {
+        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        if (file.exists()) {
+            try {
+                // Чтение данных из файла
+                StringBuilder jsonBuilder = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+
+                // Преобразование строки в объект JSON
+                JSONObject userJson = new JSONObject(jsonBuilder.toString());
+
+                // Получение XP и уровня
+                int newXp = userJson.getInt("xp");
+                int newLevel = userJson.getInt("level");
+
+                level.setText("Level: " + newLevel);
+                xp.setText(newXp + "xp");
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        } else {
+            // Файл не найден, возможно, отображаем начальные значения или сообщение
+            Log.d("FileRead", "Файл user_data.json не найден.");
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,6 +126,15 @@ public class HomeFragment extends Fragment {
         level = view.findViewById(R.id.level);
         nickname = view.findViewById(R.id.nickname);
         xp = view.findViewById(R.id.xp);
+
+        // Ловим сигнал от MainActivity, если нужно обновить UI
+        getParentFragmentManager().setFragmentResultListener("updateRequest", this, (requestKey, bundle) -> {
+            boolean update = bundle.getBoolean("update");
+            if (update) {
+                // Обновляем данные, когда получили сигнал
+                updateXpAndLevelUI();
+            }
+        });
 
         // Получение времени из аргументов
         if (getArguments() != null) {

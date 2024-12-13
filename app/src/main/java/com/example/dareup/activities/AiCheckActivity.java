@@ -1,4 +1,4 @@
-package com.example.dareup;
+package com.example.dareup.activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -18,7 +18,6 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +25,8 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.dareup.R;
+import com.example.dareup.entities.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -63,7 +64,6 @@ public class AiCheckActivity extends AppCompatActivity {
     private Uri image_uri;
     ImageLabeler labeler;
     String difficultyLevel, activeTask, check_prompt;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

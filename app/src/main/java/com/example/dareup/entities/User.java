@@ -1,4 +1,4 @@
-package com.example.dareup;
+package com.example.dareup.entities;
 
 import java.util.List;
 
@@ -20,9 +20,6 @@ public class User {
         this.completedTasks = completedTasks;
     }
 
-    public int getTries() {
-        return tries;
-    }
 
     public void setTries(int tries) {
         this.tries = tries;

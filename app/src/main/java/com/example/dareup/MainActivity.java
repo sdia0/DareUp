@@ -1,7 +1,6 @@
 package com.example.dareup;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,6 +41,14 @@ public class MainActivity extends AppCompatActivity {
         // Получаем данные из Intent
         Intent intent = getIntent();
         long retryAfter = intent.getLongExtra("retryAfter", 0);  // Получаем retryAfter (по умолчанию 0)
+        boolean updateNeeded = intent.getBooleanExtra("updateNeeded", false);  // Проверяем флаг
+
+        if (updateNeeded) {
+            // Передаем сигнал фрагменту для обновления данных
+            Bundle result = new Bundle();
+            result.putBoolean("update", true);  // Добавляем флаг
+            getSupportFragmentManager().setFragmentResult("updateRequest", result);
+        }
 
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.viewPager);

@@ -1,4 +1,4 @@
-package com.example.dareup;
+package com.example.dareup.entities;
 
 public class Memory {
     private String title;
