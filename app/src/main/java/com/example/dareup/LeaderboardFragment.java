@@ -25,9 +25,6 @@ public class LeaderboardFragment extends Fragment {
     private DatabaseReference databaseReference;
     private RecyclerView recyclerView;
     private BoardAdapter adapter;
-    private FloatingActionButton fabPlus, fabQr, fabId;
-    private boolean isFabOpen = false;
-
     public LeaderboardFragment() {
         // Required empty public constructor
     }
@@ -37,10 +34,6 @@ public class LeaderboardFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_leaderboard, container, false);
-
-        fabPlus = view.findViewById(R.id.fab_plus);
-        fabId = view.findViewById(R.id.fab_id);
-        fabQr = view.findViewById(R.id.fab_qr);
 
         // Инициализация RecyclerView
         recyclerView = view.findViewById(R.id.recyclerView); // Убедитесь, что в вашем XML есть RecyclerView с таким ID
@@ -94,65 +87,6 @@ public class LeaderboardFragment extends Fragment {
             }
         });
 
-        // Устанавливаем слушатель на основную кнопку с плюсиком
-        fabPlus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (isFabOpen) {
-                    // Если кнопки раскрыты, скрываем их
-                    closeFabMenu();
-                } else {
-                    // Если кнопки скрыты, раскрываем их
-                    openFabMenu();
-                }
-            }
-        });
-
-        // Слушатели на дополнительные кнопки (можно сделать что-то при нажатии)
-        fabId.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(), "Option 1 clicked", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        fabQr.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(), "Option 2 clicked", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         return view;
-    }
-    // Метод для раскрытия кнопок
-    private void openFabMenu() {
-        fabId.show(); // Показываем первую кнопку
-        fabQr.show(); // Показываем вторую кнопку
-
-        // Анимация раскрытия вверх
-        fabId.animate().translationY(-getResources().getDimension(R.dimen.fab_option1_translate)).setDuration(200);
-        fabQr.animate().translationY(-getResources().getDimension(R.dimen.fab_option2_translate)).setDuration(200);
-
-        isFabOpen = true;  // Меняем состояние
-    }
-
-    // Метод для закрытия кнопок
-    private void closeFabMenu() {
-        // Анимация скрытия вниз
-        fabId.animate().translationY(0).setDuration(200).withEndAction(new Runnable() {
-            @Override
-            public void run() {
-                fabId.setVisibility(View.GONE); // Прячем после анимации
-            }
-        });
-
-        fabQr.animate().translationY(0).setDuration(200).withEndAction(new Runnable() {
-            @Override
-            public void run() {
-                fabQr.setVisibility(View.GONE); // Прячем после анимации
-            }
-        });
-        isFabOpen = false; // Меняем состояние
     }
 }

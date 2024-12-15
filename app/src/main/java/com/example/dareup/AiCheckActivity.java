@@ -52,6 +52,7 @@ import java.io.FileDescriptor;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 public class AiCheckActivity extends AppCompatActivity {
@@ -165,14 +166,6 @@ public class AiCheckActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-
-        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && data != null){
-            image_uri = data.getData();
-            //innerImage.setImageURI(image_uri);
-            Bitmap bitmap = uriToBitmap(image_uri);
-            doInference(bitmap);
-        }
-
         if (requestCode == IMAGE_CAPTURE_CODE && resultCode == RESULT_OK){
             //innerImage.setImageURI(image_uri);
             Bitmap bitmap = uriToBitmap(image_uri);
@@ -191,15 +184,14 @@ public class AiCheckActivity extends AppCompatActivity {
                     public void onSuccess(List<ImageLabel> labels) {
                         boolean flag = true;
                         for (ImageLabel label : labels) {
-                            String text = label.getText();
+                            String text = label.getText().trim();
                             float confidence = label.getConfidence();
                             //int index = label.getIndex();
-                            if (text.equals(check_prompt) && confidence > 50) {
+                            if (text.equals(check_prompt) && confidence > 0.5) {
                                 success();
                                 break;
                             }
                             else flag = false;
-                            //resultTv.append(text + "      " + confidence + "\n");
                         }
                         if (!flag) Toast.makeText(AiCheckActivity.this, "Проверка не пройдена...", Toast.LENGTH_SHORT).show();
                     }
@@ -246,6 +238,7 @@ public class AiCheckActivity extends AppCompatActivity {
         return  null;
     }
     void success() {
+
         btnCompleteCheck.setEnabled(true);
         btnCompleteCheck.setAlpha(1.0f);
         // Обновляем TextView
@@ -280,6 +273,7 @@ public class AiCheckActivity extends AppCompatActivity {
     private void addXpToUserAndResetTask(String userId, int xpToAdd) {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference("users").child(userId);
 
+        DatabaseReference finalDatabase = database;
         database.child("xp").get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Integer currentXp = task.getResult().getValue(Integer.class);
@@ -293,10 +287,10 @@ public class AiCheckActivity extends AppCompatActivity {
                         newXp = newXp % 100;             // Остаток XP после повышения уровня
 
                         // Сначала обновляем уровень
-                        updateUserLevel(database, levelsGained, newXp);
+                        updateUserLevel(finalDatabase, levelsGained, newXp);
                     } else {
                         // Если XP меньше 100, просто обновляем XP
-                        updateXp(database, newXp);
+                        updateXp(finalDatabase, newXp);
                     }
                 } else {
                     Toast.makeText(this, "Текущие XP не найдены.", Toast.LENGTH_SHORT).show();
@@ -307,6 +301,28 @@ public class AiCheckActivity extends AppCompatActivity {
                 Log.d("FirebaseGetXP", "Ошибка получения XP: " + task.getException());
             }
         });
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            // Получаем ID текущего пользователя
+            String uid = currentUser.getUid();
+
+            database = FirebaseDatabase.getInstance().getReference();
+
+            // Создаем объект для сохранения
+            HashMap<String, Object> taskData = new HashMap<>();
+            taskData.put("activeTask", activeTask);
+
+            // Сохраняем активное задание по пути users/uid/completedTasks
+            database.child("users").child(uid).child("completedTasks").push().setValue(taskData)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("FirebaseWrite", "Данные успешно сохранены в Firebase.");
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("FirebaseWrite", "Ошибка сохранения данных: ", e);
+                    });
+        }
         saveActiveTaskToFile("");
     }
     private void saveActiveTaskToFile(String activeTask) {

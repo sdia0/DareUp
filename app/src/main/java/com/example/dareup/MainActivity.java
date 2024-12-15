@@ -42,12 +42,13 @@ public class MainActivity extends AppCompatActivity {
         // Получаем данные из Intent
         Intent intent = getIntent();
         long retryAfter = intent.getLongExtra("retryAfter", 0);  // Получаем retryAfter (по умолчанию 0)
+        boolean showLeaderboard = intent.getBooleanExtra("showLeaderboard", true);
 
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.viewPager);
 
         // Передаем retryAfter и другие параметры в адаптер
-        viewPager.setAdapter(new ScreenSlidePagerAdapter(this, retryAfter));
+        viewPager.setAdapter(new ScreenSlidePagerAdapter(this, retryAfter, showLeaderboard));
 
         // Устанавливаем текущий элемент на второй (индекс 1) - HomeFragment
         viewPager.setCurrentItem(1);
@@ -63,11 +64,16 @@ public class MainActivity extends AppCompatActivity {
                             tab.setIcon(R.drawable.ic_tab2_inactive);
                             break;
                         case 2:
-                            tab.setIcon(R.drawable.ic_tab3_inactive);
+                            if (showLeaderboard) {
+                                tab.setIcon(R.drawable.ic_tab3_inactive); // Показываем иконку для Leaderboard, если showLeaderboard = true
+                            } else {
+                                tabLayout.removeTabAt(2); // Убираем вкладку, если showLeaderboard = false
+                            }
                             break;
                     }
                 }
         ).attach();
+
 
         showTabLayoutForAWhile();
 
@@ -91,9 +97,12 @@ public class MainActivity extends AppCompatActivity {
 
     private class ScreenSlidePagerAdapter extends FragmentStateAdapter {
         private long retryAfter;  // Переменная для хранения retryAfter
-        public ScreenSlidePagerAdapter(FragmentActivity fa, long retryAfterValue) {
+        private boolean showLeaderboard; // Флаг для отображения LeaderboardFragment
+
+        public ScreenSlidePagerAdapter(FragmentActivity fa, long retryAfterValue, boolean showLeaderboardValue) {
             super(fa);
             this.retryAfter = retryAfterValue;  // Присваиваем значение переменной класса
+            this.showLeaderboard = showLeaderboardValue; // Сохраняем флаг
         }
 
         @NonNull
@@ -101,19 +110,23 @@ public class MainActivity extends AppCompatActivity {
         public Fragment createFragment(int position) {
             switch (position) {
                 case 0:
-                    return new TasksFragment();
+                    return TasksFragment.newInstance(showLeaderboard); // Первый фрагмент
                 case 1:
-                    return HomeFragment.newInstance(retryAfter);  // Передаем параметры в HomeFragment
+                    return HomeFragment.newInstance(retryAfter, showLeaderboard);  // Передаем параметр retryAfter в HomeFragment
                 case 2:
-                    return new LeaderboardFragment();
+                    if (showLeaderboard) { // Проверяем флаг
+                        return new LeaderboardFragment(); // Если showLeaderboard true, показываем LeaderboardFragment
+                    } else {
+                        return new Fragment(); // Возвращаем пустой фрагмент, если нужно скрыть LeaderboardFragment
+                    }
                 default:
-                    return new HomeFragment();
+                    return new HomeFragment(); // На случай, если что-то пойдет не так, возвращаем HomeFragment
             }
         }
 
         @Override
         public int getItemCount() {
-            return 3; // Количество фрагментов
+            return showLeaderboard ? 3 : 2; // Возвращаем 2 или 3, в зависимости от showLeaderboard
         }
     }
 

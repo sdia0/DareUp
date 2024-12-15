@@ -45,6 +45,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
@@ -52,12 +53,14 @@ public class HomeFragment extends Fragment {
     private TextView tvTask, nickname, xp, level;
     private CountDownTimer countDownTimer;
     private long retryAfter; // Время в миллисекундах, полученное из другой активности
+    private boolean showLeaderboard;
     String difficultyLevel, id;
     private long[] endTime = new long[1]; // Время окончания таймера
     private static final String PREFS_NAME = "TimerPrefs";
     private static final String KEY_END_TIME = "end_time";
     ImageButton ibProfilePicture;
     String activeTask;
+    String fileName, memoryFileName;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -77,10 +80,11 @@ public class HomeFragment extends Fragment {
             xp.setText(user.getXp() + "xp");
         }
     }
-    public static HomeFragment newInstance(long retryAfter) {
+    public static HomeFragment newInstance(long retryAfter, boolean showLeaderboard) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
         args.putLong("retryAfter", retryAfter); // Сохранение значения в аргументах
+        args.putBoolean("showLeaderboard", showLeaderboard); // Сохранение значения в аргументах
         fragment.setArguments(args);
         return fragment;
     }
@@ -113,6 +117,7 @@ public class HomeFragment extends Fragment {
         // Получение времени из аргументов
         if (getArguments() != null) {
             retryAfter = getArguments().getLong("retryAfter", 0);
+            showLeaderboard = getArguments().getBoolean("showLeaderboard", true);
             Log.d("Таймер", "Время получено: " + retryAfter);
 
             //difficultyLevel = prefs1.getString("difficultyLevel", null); // Значение по умолчанию теперь null
@@ -135,6 +140,14 @@ public class HomeFragment extends Fragment {
                 endTime[0] = currentTime + retryAfter; // Используем переданное значение retryAfter
                 prefs2.edit().putLong(KEY_END_TIME, endTime[0]).apply();
                 startCountDownTimer(retryAfter);
+            }
+            if (showLeaderboard) {
+                fileName = "user_data.json";
+                memoryFileName = "memories.json";
+            }
+            else {
+                fileName = "guest_data.json";
+                memoryFileName = "guest_memories.json";
             }
         }
 
@@ -252,7 +265,29 @@ public class HomeFragment extends Fragment {
                     Toast.makeText(getActivity(), "Вы исчерпали количество попыток", Toast.LENGTH_SHORT).show();
                     retryAfter = 60 * 1000;
                     setTries(2);
-                    addCompletedTaskToFirebase(id);
+
+                    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+                    FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+                    if (currentUser != null) {
+                        // Получаем ID текущего пользователя
+                        String uid = currentUser.getUid();
+
+                        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+
+                        // Создаем объект для сохранения
+                        HashMap<String, Object> taskData = new HashMap<>();
+                        taskData.put("activeTask", activeTask);
+
+                        // Сохраняем активное задание по пути users/uid/completedTasks
+                        database.child("users").child(uid).child("completedTasks").push().setValue(taskData)
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("FirebaseWrite", "Данные успешно сохранены в Firebase.");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("FirebaseWrite", "Ошибка сохранения данных: ", e);
+                                });
+                    }
                     saveActiveTaskToFile("");
 
                     //difficultyLevel = prefs1.getString("difficultyLevel", null); // Значение по умолчанию теперь null
@@ -345,7 +380,7 @@ public class HomeFragment extends Fragment {
         return view;
     }
     public int getTries() {
-        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        File file = new File(getActivity().getFilesDir(), fileName);
         JSONObject userJson = new JSONObject();
         try {
             // Проверяем, существует ли файл, и если да, читаем его
@@ -371,7 +406,7 @@ public class HomeFragment extends Fragment {
         return 3;
     }
     public void setTries(int tries) {
-        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        File file = new File(getActivity().getFilesDir(), fileName);
         JSONObject userJson = new JSONObject();
         try {
             // Проверяем, существует ли файл, и если да, читаем его
@@ -406,7 +441,7 @@ public class HomeFragment extends Fragment {
         User user = null;
         try {
             // Определяем файл, из которого будем читать
-            File file = new File(getActivity().getFilesDir(), "user_data.json");
+            File file = new File(getActivity().getFilesDir(), fileName);
             FileReader reader = new FileReader(file);
             BufferedReader bufferedReader = new BufferedReader(reader);
             StringBuilder stringBuilder = new StringBuilder();
@@ -495,6 +530,7 @@ public class HomeFragment extends Fragment {
     private void addXpToUserAndResetTask(String userId, int xpToAdd) {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference("users").child(userId);
 
+        DatabaseReference finalDatabase = database;
         database.child("xp").get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Integer currentXp = task.getResult().getValue(Integer.class);
@@ -508,10 +544,10 @@ public class HomeFragment extends Fragment {
                         newXp = newXp % 100;             // Остаток XP после повышения уровня
 
                         // Сначала обновляем уровень
-                        updateUserLevel(database, levelsGained, newXp);
+                        updateUserLevel(finalDatabase, levelsGained, newXp);
                     } else {
                         // Если XP меньше 100, просто обновляем XP
-                        updateXp(database, newXp);
+                        updateXp(finalDatabase, newXp);
                     }
                 } else {
                     Toast.makeText(getActivity(), "Текущие XP не найдены.", Toast.LENGTH_SHORT).show();
@@ -523,7 +559,28 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        addCompletedTaskToFirebase(id);
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            // Получаем ID текущего пользователя
+            String uid = currentUser.getUid();
+
+            database = FirebaseDatabase.getInstance().getReference();
+
+            // Создаем объект для сохранения
+            HashMap<String, Object> taskData = new HashMap<>();
+            taskData.put("activeTask", activeTask);
+
+            // Сохраняем активное задание по пути users/uid/completedTasks
+            database.child("users").child(uid).child("completedTasks").push().setValue(taskData)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("FirebaseWrite", "Данные успешно сохранены в Firebase.");
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("FirebaseWrite", "Ошибка сохранения данных: ", e);
+                    });
+        }
         saveActiveTaskToFile("");
     }
 
@@ -573,7 +630,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void saveXpToFile(int xp) {
-        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        File file = new File(getActivity().getFilesDir(), fileName);
         JSONObject userJson = new JSONObject();
         try {
             // Проверяем, существует ли файл, и если да, читаем его
@@ -606,7 +663,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void saveLevelToFile(int level) {
-        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        File file = new File(getActivity().getFilesDir(), fileName);
         JSONObject userJson = new JSONObject();
         try {
             // Проверяем, существует ли файл, и если да, читаем его
@@ -639,7 +696,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void saveActiveTaskToFile(String activeTask) {
-        File file = new File(getActivity().getFilesDir(), "user_data.json");
+        File file = new File(getActivity().getFilesDir(), fileName);
         JSONObject userJson = new JSONObject();
 
         try {
@@ -672,41 +729,6 @@ public class HomeFragment extends Fragment {
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
-    }
-    private void addCompletedTaskToFirebase(String userId) {
-        DatabaseReference completedTasksRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("completed_tasks");
-
-        completedTasksRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<String> completedTasks = new ArrayList<>();
-
-                // Если уже есть выполненные задания, получаем их
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
-                        String existingTask = taskSnapshot.getValue(String.class);
-                        completedTasks.add(existingTask);
-                    }
-                }
-
-                // Добавляем новое задание в список
-                completedTasks.add(activeTask);
-
-                // Обновляем список выполненных заданий в Firebase
-                completedTasksRef.setValue(completedTasks).addOnCompleteListener(updateTask -> {
-                    if (updateTask.isSuccessful()) {
-                        Log.d("FirebaseUpdate", "Выполненное задание добавлено.");
-                    } else {
-                        Log.d("FirebaseUpdate", "Ошибка добавления задания: " + updateTask.getException());
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.d("FirebaseError", "Ошибка при чтении данных: " + databaseError.getMessage());
-            }
-        });
     }
 
     private void disableButtons() {

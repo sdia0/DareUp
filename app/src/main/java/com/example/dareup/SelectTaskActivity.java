@@ -30,16 +30,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.io.BufferedReader;
+import java.util.Set;
 
 public class SelectTaskActivity extends AppCompatActivity {
     private TextView tvTask;
     private Button btnNo, btnYes;
     private String difficultyLevel;
     private int currentTries;
-    private long retryAfter = 60 * 1000;
+    private long retryAfter = 60 * 1000 * 60 * 24;
     private CountDownTimer countDownTimer;
     private String selectedTask; // Хранит выбранное задание
     @Override
@@ -154,7 +156,7 @@ public class SelectTaskActivity extends AppCompatActivity {
                 userJson = new JSONObject(jsonBuilder.toString());
             }
 
-            userJson.put("tries", 3);
+            userJson.put("tries", 2);
 
             // Записываем обновленный объект JSON обратно в файл
             FileWriter writer = new FileWriter(file);
@@ -179,50 +181,77 @@ public class SelectTaskActivity extends AppCompatActivity {
     }
     private List<String> usedTasks = new ArrayList<>(); // Список использованных заданий
     private void loadRandomTask() {
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("tasks");
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
-        // Получаем задания по выбранной сложности
-        databaseReference.child(difficultyLevel).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    List<String> tasksList = new ArrayList<>();
+        if (currentUser != null) {
+            // Получаем ID текущего пользователя
+            String uid = currentUser.getUid();
+            DatabaseReference tasksReference = FirebaseDatabase.getInstance().getReference("tasks");
+            DatabaseReference completedTasksReference = FirebaseDatabase.getInstance().getReference("users").child(uid).child("completedTasks"); // uid - идентификатор пользователя
 
-                    for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
-                        String taskDescription = taskSnapshot.child("description").getValue(String.class);
+            // Получаем задания по выбранной сложности
+            tasksReference.child(difficultyLevel).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot tasksSnapshot) {
+                    if (tasksSnapshot.exists()) {
+                        List<String> tasksList = new ArrayList<>();
 
-                        // Если задание еще не использовано, добавляем его в список
-                        if (!usedTasks.contains(taskDescription)) {
-                            tasksList.add(taskDescription);
-                        }
-                    }
+                        // Загружаем завершенные задания
+                        completedTasksReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot completedSnapshot) {
+                                // Собираем завершенные задания в список
+                                Set<String> completedTasks = new HashSet<>();
+                                for (DataSnapshot completedTask : completedSnapshot.getChildren()) {
+                                    String taskDescription = completedTask.child("activeTask").getValue(String.class);
+                                    completedTasks.add(taskDescription);
+                                }
 
-                    // Проверяем, есть ли доступные задания, которые не были использованы
-                    if (!tasksList.isEmpty()) {
-                        Random random = new Random();
-                        int randomIndex = random.nextInt(tasksList.size());
-                        selectedTask = tasksList.get(randomIndex); // Сохраняем описание задания
+                                // Проверяем доступные задания
+                                for (DataSnapshot taskSnapshot : tasksSnapshot.getChildren()) {
+                                    String taskDescription = taskSnapshot.child("description").getValue(String.class);
 
-                        // Обновляем текст задания на экране
-                        tvTask.setText(selectedTask);
+                                    // Если задание еще не использовано и не завершено, добавляем его в список
+                                    if (!usedTasks.contains(taskDescription) && !completedTasks.contains(taskDescription)) {
+                                        tasksList.add(taskDescription);
+                                    }
+                                }
 
-                        // Добавляем выбранное задание в список использованных
-                        usedTasks.add(selectedTask);
+                                // Проверяем, есть ли доступные задания, которые не были использованы
+                                if (!tasksList.isEmpty()) {
+                                    Random random = new Random();
+                                    int randomIndex = random.nextInt(tasksList.size());
+                                    selectedTask = tasksList.get(randomIndex); // Сохраняем описание задания
+
+                                    // Обновляем текст задания на экране
+                                    tvTask.setText(selectedTask);
+
+                                    // Добавляем выбранное задание в список использованных
+                                    usedTasks.add(selectedTask);
+                                } else {
+                                    // Если все задания уже использованы или завершены
+                                    Toast.makeText(SelectTaskActivity.this, "Все задания для этого уровня сложности уже были выполнены.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+                                Toast.makeText(SelectTaskActivity.this, "Ошибка: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     } else {
-                        // Если все задания уже использованы
-                        // Toast.makeText(SelectTaskActivity.this, "Все задания для этого уровня сложности уже были выполнены.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SelectTaskActivity.this, "Нет доступных заданий для этого уровня сложности.", Toast.LENGTH_SHORT).show();
                     }
-                } else {
-                    Toast.makeText(SelectTaskActivity.this, "Нет доступных заданий для этого уровня сложности.", Toast.LENGTH_SHORT).show();
                 }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Toast.makeText(SelectTaskActivity.this, "Ошибка: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Toast.makeText(SelectTaskActivity.this, "Ошибка: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
     private void startRetryTimer() {
         btnNo.setEnabled(false); // Деактивируем кнопку "другое задание"
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();

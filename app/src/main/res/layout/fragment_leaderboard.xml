@@ -27,42 +27,4 @@
         android:layout_marginTop="80dp"
         android:id="@+id/recyclerView" />
 
-    <!-- Кнопка с плюсиком -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_plus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="25dp"
-        android:layout_marginBottom="50dp"
-        android:src="@drawable/ic_plus"
-        app:tint="@color/forText"
-        app:backgroundTint="@color/forBackground"/>
-
-    <!-- Первая выпадающая кнопка -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_id"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="25dp"
-        android:layout_marginBottom="50dp"
-        android:visibility="gone"
-        android:src="@drawable/ic_id"
-        app:tint="@color/forText"
-        app:backgroundTint="@color/forBackground" />
-
-    <!-- Вторая выпадающая кнопка -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_qr"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="25dp"
-        android:layout_marginBottom="50dp"
-        android:visibility="gone"
-        android:src="@drawable/ic_qr"
-        app:tint="@color/forText"
-        app:backgroundTint="@color/forBackground" />
-
 </FrameLayout>

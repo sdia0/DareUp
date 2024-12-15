@@ -37,11 +37,24 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TasksFragment extends Fragment {
     private RecyclerView recyclerView;
     private ExpandableMemoryAdapter adapter;
+    String fileName;
+    private FirebaseAuth mAuth;
+    private DatabaseReference mDatabase;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    public static TasksFragment newInstance(boolean showLeaderboard) {
+        TasksFragment fragment = new TasksFragment();
+        Bundle args = new Bundle();
+        args.putBoolean("showLeaderboard", showLeaderboard); // Сохранение значения в аргументах
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -54,6 +67,28 @@ public class TasksFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
 
         recyclerView = view.findViewById(R.id.recycler_view); // Инициализация RecyclerView
+
+        // Инициализация FirebaseAuth и Realtime Database
+        mAuth = FirebaseAuth.getInstance();
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+
+        if (getArguments() != null) {
+            boolean showLeaderboard = getArguments().getBoolean("showLeaderboard", true);
+            if (showLeaderboard) fileName = "memories.json";
+            else fileName = "guest_memories.json";
+        }
+
+        // Инициализация SwipeRefreshLayout
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
+
+        // Обработка события свайпа вниз
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            // Обновляем данные
+            syncWithFirebase();
+
+            // Убираем индикатор обновления после завершения
+            swipeRefreshLayout.setRefreshing(false);
+        });
 
         /*FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
@@ -95,6 +130,75 @@ public class TasksFragment extends Fragment {
 
         return view; // Возвращаем корневое представление для фрагмента
     }
+    public void syncWithFirebase() {
+        String uid = mAuth.getCurrentUser().getUid();
+        mDatabase.child("memories").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    List<Memory> memoryList = new ArrayList<>();  // Создаем список для хранения всех memories
+
+                    // Проходим по каждому дочернему узлу (т.е. по каждому объекту Memory)
+                    for (DataSnapshot memorySnapshot : snapshot.getChildren()) {
+                        String title = memorySnapshot.child("title").getValue(String.class);
+                        String task = memorySnapshot.child("task").getValue(String.class);
+                        String description = memorySnapshot.child("description").getValue(String.class);
+
+                        if (title.isEmpty()) {
+                            title = "пусто";
+
+                        }
+                        if (task.isEmpty()) {
+                            task = "пусто";
+
+                        }
+                        if (description.isEmpty()) {
+                            description = "пусто";
+
+                        }
+                        Memory memory = new Memory("", title, task, description);
+
+                        // Добавляем объект Memory в список
+                        memoryList.add(memory);
+                    }
+
+                    // Сохраняем список memories локально в JSON-файл
+                    saveMemoriesLocally(memoryList, "memories.json");
+                } else {
+                    //Toast.makeText(WelcomeActivity.this, "Данные не найдены", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("WelcomeActivity", "Ошибка чтения данных: " + error.getMessage());
+            }
+        });
+        loadMemoriesFromFile();
+    }
+    private void saveMemoriesLocally(List<Memory> memoryList, String fileName) {
+        Gson gson = new Gson();
+        String updatedJson = gson.toJson(memoryList);
+
+        // Записываем обновленный JSON обратно в файл
+        FileOutputStream fos = null;
+        OutputStreamWriter osw = null;
+        try {
+            fos = getActivity().openFileOutput(fileName, Context.MODE_PRIVATE);
+            osw = new OutputStreamWriter(fos);
+            osw.write(updatedJson);
+            Log.d("EditTaskActivity", "Memory list updated and saved to file: " + fileName);
+        } catch (IOException e) {
+            Log.e("EditTaskActivity", "Error writing to file: " + e.getMessage(), e);
+        } finally {
+            try {
+                if (osw != null) osw.close();
+                if (fos != null) fos.close();
+            } catch (IOException e) {
+                Log.e("EditTaskActivity", "Error closing file: " + e.getMessage(), e);
+            }
+        }
+    }
     private List<Memory> loadMemoriesFromFile() {
         // Прочитать существующий JSON-файл
         List<Memory> memoryList = new ArrayList<>();
@@ -102,7 +206,7 @@ public class TasksFragment extends Fragment {
         FileInputStream fis = null;
         BufferedReader reader = null;
         try {
-            fis = requireActivity().openFileInput("memories.json");
+            fis = requireActivity().openFileInput(fileName);
             reader = new BufferedReader(new InputStreamReader(fis));
             StringBuilder builder = new StringBuilder();
             String line;

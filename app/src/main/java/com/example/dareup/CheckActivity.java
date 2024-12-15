@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 
 
 public class CheckActivity extends AppCompatActivity {
@@ -173,12 +174,6 @@ public class CheckActivity extends AppCompatActivity {
             startQrCodeScanner();
         }
     }
-    private void capturePhoto() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(intent, CAMERA_REQUEST_CODE);
-        }
-    }
     private void startQrCodeScanner() {
         IntentIntegrator integrator = new IntentIntegrator(this);
         integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE); // Устанавливаем формат QR-кода
@@ -227,6 +222,7 @@ public class CheckActivity extends AppCompatActivity {
     private void addXpToUserAndResetTask(String userId, int xpToAdd) {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference("users").child(userId);
 
+        DatabaseReference finalDatabase = database;
         database.child("xp").get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Integer currentXp = task.getResult().getValue(Integer.class);
@@ -240,10 +236,10 @@ public class CheckActivity extends AppCompatActivity {
                         newXp = newXp % 100;             // Остаток XP после повышения уровня
 
                         // Сначала обновляем уровень
-                        updateUserLevel(database, levelsGained, newXp);
+                        updateUserLevel(finalDatabase, levelsGained, newXp);
                     } else {
                         // Если XP меньше 100, просто обновляем XP
-                        updateXp(database, newXp);
+                        updateXp(finalDatabase, newXp);
                     }
                 } else {
                     Toast.makeText(this, "Текущие XP не найдены.", Toast.LENGTH_SHORT).show();
@@ -254,6 +250,28 @@ public class CheckActivity extends AppCompatActivity {
                 Log.d("FirebaseGetXP", "Ошибка получения XP: " + task.getException());
             }
         });
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            // Получаем ID текущего пользователя
+            String uid = currentUser.getUid();
+
+            database = FirebaseDatabase.getInstance().getReference();
+
+            // Создаем объект для сохранения
+            HashMap<String, Object> taskData = new HashMap<>();
+            taskData.put("activeTask", activeTask);
+
+            // Сохраняем активное задание по пути users/uid/completedTasks
+            database.child("users").child(uid).child("completedTasks").push().setValue(taskData)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("FirebaseWrite", "Данные успешно сохранены в Firebase.");
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("FirebaseWrite", "Ошибка сохранения данных: ", e);
+                    });
+        }
         saveActiveTaskToFile("");
     }
     private void saveActiveTaskToFile(String activeTask) {
@@ -471,7 +489,7 @@ public class CheckActivity extends AppCompatActivity {
             float distanceInMeters = results[0];
 
             if (distanceInMeters < 100) success();
-            else Toast.makeText(CheckActivity.this, "Местоположение", Toast.LENGTH_SHORT).show();
+            else Toast.makeText(CheckActivity.this, "Неверное местоположение", Toast.LENGTH_SHORT).show();
         }
         else Toast.makeText(this, "Check_prompt is null", Toast.LENGTH_SHORT).show();
     }

@@ -122,7 +122,7 @@ public class WelcomeActivity extends AppCompatActivity {
     private void createLocalUserAndMemories() {
         // Создаем фиктивного пользователя с тестовыми данными
         String id = "local_user";
-        String name = "Guest User";
+        String name = "guest";
         int defaultPictureResId = R.drawable.default_profile_picture;
         String photoUrl = "android.resource://" + getPackageName() + "/" + defaultPictureResId;
         String activeTask = "";
@@ -140,11 +140,11 @@ public class WelcomeActivity extends AppCompatActivity {
         localUser.setTries(2);
 
         // Сохраняем данные пользователя локально
-        saveUserDataLocally(localUser, "user_data_locally.json");
+        saveUserDataLocally(localUser, "guest_data.json");
 
         // Создаем пустой список воспоминаний
         List<Memory> emptyMemoriesList = new ArrayList<>();
-        saveMemoriesLocally(emptyMemoriesList, "memories_locally.json");
+        saveMemoriesLocally(emptyMemoriesList, "guest_memories.json");
     }
 
     // Метод для входа пользователя
