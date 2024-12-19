@@ -97,14 +97,9 @@ public class RegisterActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             String uid = user.getUid();
-                            String randomString = generateRandomString(5);
-
-                            // Создаем idForFriend, используя первые 6 символов UID и случайную строку
-                            String idForFriend = uid.substring(0, 6) + randomString;
                             List<String> blankList = new ArrayList<>();
 
-                            User newUser = new User(uid, name, 1, 0, "", "", "", idForFriend, blankList); // Уровень 1 и очки 0
-
+                            User newUser = new User(uid, name, 1, 0, "", "", "", blankList); // Уровень 1 и очки 0
                             mDatabase.child(uid).setValue(newUser)
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
@@ -113,9 +108,6 @@ public class RegisterActivity extends AppCompatActivity {
                                                 Toast.makeText(RegisterActivity.this, "Письмо для подтверждения отправлено!", Toast.LENGTH_SHORT).show();
                                                 // Отправляем письмо подтверждения и завершаем активность после получения подтверждения
                                                 sendVerificationEmail();
-                                                if (imageUri != null) {
-                                                    uploadImageToFirebase(imageUri, uid); // Передаем uid для загрузки изображения
-                                                }
                                             } else {
                                                 Log.e("RegisterActivity", "Failed to add user to database", task.getException());
                                             }
@@ -150,7 +142,6 @@ public class RegisterActivity extends AppCompatActivity {
                         public void onSuccess(Void aVoid) {
                             Toast.makeText(RegisterActivity.this, "Письмо для подтверждения отправлено!", Toast.LENGTH_SHORT).show();
                             finish();
-                            finish(); // Завершить активность после показа тоста
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -174,6 +165,7 @@ public class RegisterActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             imageUri = data.getData(); // Сохраняем URI выбранного изображения
+            Toast.makeText(this, imageUri + "", Toast.LENGTH_SHORT).show();
 
             // Обновляем TextView
             loadPhoto.setText("Изображение выбрано!"); // Устанавливаем текст
@@ -181,50 +173,5 @@ public class RegisterActivity extends AppCompatActivity {
             loadPhoto.setBackgroundColor(Color.parseColor("#FFE4C4")); // Меняем цвет view
             loadPhoto.setTextColor(Color.parseColor("#4169E1"));
         }
-    }
-
-    private void uploadImageToFirebase(Uri imageUri, String uid) { // Добавляем uid как параметр
-        if (imageUri != null) {
-            // Reference to Firebase Storage
-            StorageReference storageRef = FirebaseStorage.getInstance().getReference("profile_images/" + uid + ".jpg");
-
-            // Upload the file
-            storageRef.putFile(imageUri)
-                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            // Get the download URL and store it in the Realtime Database
-                            storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri downloadUrl) {
-                                    String imageUrl = downloadUrl.toString();
-                                    saveImageUrlToDatabase(uid, imageUrl); // Передаем uid для сохранения
-                                }
-                            });
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(RegisterActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        }
-    }
-
-    private void saveImageUrlToDatabase(String uid, String imageUrl) { // Добавляем uid как параметр
-        mDatabase.child(uid).child("photoUrl").setValue(imageUrl)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(RegisterActivity.this, "URL изображения успешно сохранён!", Toast.LENGTH_SHORT).show();
-                            //Toast.makeText(RegisterActivity.this, "URL изображения успешно сохранён!", Toast.LENGTH_SHORT).show();
-                            finish(); // Закрываем активность после завершения
-                        } else {
-                            Log.e("RegisterActivity", "Failed to save image URL", task.getException());
-                        }
-                    }
-                });
     }
 }

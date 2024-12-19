@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
 
     <application
         android:allowBackup="true"
@@ -36,6 +38,7 @@
             tools:replace="screenOrientation" />
         <activity
             android:name=".activities.EditTaskActivity"
+            android:windowSoftInputMode="adjustPan"
             android:exported="false" />
         <activity
             android:name=".activities.DifficultyActivity"

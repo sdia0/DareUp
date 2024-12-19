@@ -1,18 +1,23 @@
 package com.example.dareup;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.dareup.R;
 import com.example.dareup.adapters.ExpandableMemoryAdapter;
+import com.example.dareup.adapters.ImagesAdapter;
 import com.example.dareup.entities.Memory;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -28,7 +33,7 @@ import java.util.List;
 public class TasksFragment extends Fragment {
     private RecyclerView recyclerView;
     private ExpandableMemoryAdapter adapter;
-
+    private SwipeRefreshLayout swipeRefreshLayout;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -37,48 +42,23 @@ public class TasksFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recycler_view); // Инициализация RecyclerView
 
-        /*FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        setAdapter();
 
-        if (currentUser != null) {
-            // Получаем ID текущего пользователя
-            String userId = currentUser.getUid();
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
 
-            // Ссылка на конкретного пользователя в базе данных
-            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("memories").child(userId);
-            databaseReference.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    List<Memory> memoryList = new ArrayList<>();  // Создаем список для Memory
-
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        Memory memory = snapshot.getValue(Memory.class);  // Получаем объект Memory из Firebase
-                        if (memory != null) {
-                            memoryList.add(memory);  // Добавляем объект в список
-                        }
-                    }
-
-                    // Создаем и устанавливаем адаптер
-                    ExpandableMemoryAdapter adapter = new ExpandableMemoryAdapter(memoryList, getContext());
-                    recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-                    recyclerView.setAdapter(adapter);
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    // Обработка ошибок
-                }
-            });
-        }*/
-
-        adapter = new ExpandableMemoryAdapter(loadMemoriesFromFile(), getContext());
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerView.setAdapter(adapter);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Подгрузить последние данные и отрисовать адаптеры заново
+                setAdapter();
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
 
         return view; // Возвращаем корневое представление для фрагмента
     }
-    private List<Memory> loadMemoriesFromFile() {
 
+    private List<Memory> loadMemoriesFromFile() {
         // Прочитать существующий JSON-файл
         List<Memory> memoryList = new ArrayList<>();
 
@@ -114,10 +94,15 @@ public class TasksFragment extends Fragment {
         }
         return memoryList;
     }
+
+    public void setAdapter() {
+        List<Memory> memories = loadMemoriesFromFile();
+        adapter = new ExpandableMemoryAdapter(memories, getContext());
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setAdapter(adapter);
+    }
+
     public void updateData() {
-        // Чтение обновленных данных из файла
-        List<Memory> updatedData = loadMemoriesFromFile();
-        adapter.updateData(updatedData);
-        adapter.notifyDataSetChanged(); // Обновляем интерфейс
+        setAdapter();
     }
 }

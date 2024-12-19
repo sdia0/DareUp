@@ -12,7 +12,7 @@
         android:text="Название"
         android:fontFamily="@font/font3"
         android:textColor="@color/forText"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="28sp"/>
 
@@ -20,26 +20,32 @@
         android:id="@+id/detailsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/taskTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/font3"
-            android:text="Описание"
+            android:text="Задание"
             android:textColor="@color/forText"
             android:textSize="28sp" />
 
         <TextView
             android:id="@+id/taskDescription"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/font3"
             android:text="Описание"
             android:textColor="@color/forText"
             android:textSize="28sp" />
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/images"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"/>
+
     </LinearLayout>
+
 </LinearLayout>

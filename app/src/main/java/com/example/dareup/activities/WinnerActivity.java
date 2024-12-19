@@ -61,6 +61,7 @@ public class WinnerActivity extends AppCompatActivity {
             public void onClick(View v) {
                     Intent intent = new Intent(WinnerActivity.this, EditTaskActivity.class);
                     startActivity(intent);
+                    finish();
                 }
             });
     }

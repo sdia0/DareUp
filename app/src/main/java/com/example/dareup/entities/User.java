@@ -1,14 +1,14 @@
 package com.example.dareup.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class User {
-    String id, name, photoUrl, activeTask, activeTaskDifficulty, idForFriend;
-    int level, xp, tries;
-    private List<String> completedTasks;
-
+    String id = "", name = "", photoUrl = "", activeTask = "", activeTaskDifficulty = "";
+    int level = 0, xp = 0, tries = 3;
+    private List<String> completedTasks = new ArrayList<>();
     public User() {}
-    public User(String id, String name, int level, int xp, String photoUrl, String activeTask, String activeTaskDifficulty, String idForFriend, List<String> completedTasks) {
+    public User(String id, String name, int level, int xp, String photoUrl, String activeTask, String activeTaskDifficulty, List<String> completedTasks) {
         this.id = id;
         this.name = name;
         this.level = level;
@@ -16,21 +16,23 @@ public class User {
         this.photoUrl = photoUrl;
         this.activeTask = activeTask;
         this.activeTaskDifficulty = activeTaskDifficulty;
-        this.idForFriend = idForFriend;
         this.completedTasks = completedTasks;
     }
 
+    public int getTries() {
+        return tries;
+    }
+
+    public List<String> getCompletedTasks() {
+        return completedTasks;
+    }
+
+    public void setCompletedTasks(List<String> completedTasks) {
+        this.completedTasks = completedTasks;
+    }
 
     public void setTries(int tries) {
         this.tries = tries;
-    }
-
-    public String getIdForFriend() {
-        return idForFriend;
-    }
-
-    public void setIdForFriend(String idForFriend) {
-        this.idForFriend = idForFriend;
     }
 
     public String getActiveTaskDifficulty() {

@@ -5,82 +5,115 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.EditTaskActivity"
+    android:layout_gravity="center"
+    android:layout_margin="10dp"
+    android:background="@color/forBackground"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:background="@color/forBackground"
-    android:layout_gravity="center"
-    android:layout_margin="10dp">
+    tools:context=".activities.EditTaskActivity">
 
-    <!-- Заголовок -->
-    <TextView
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Оставить воспоминание"
-        android:textSize="36sp"
-        android:textColor="@color/forText"
-        android:paddingStart="10dp"
-        android:fontFamily="@font/font3"/>
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:id="@+id/tvTaskTitle"
-        android:layout_height="wrap_content"
-        android:text="Задание: "
-        android:textSize="24sp"
-        android:fontFamily="@font/font3"
-        android:layout_margin="10dp"
-        android:textColor="@color/forText"
-        />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/etTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Название"
-        android:textColorHint="@color/forText"
-        android:textColor="@color/forText"
-        android:fontFamily="@font/font3"
-        android:textSize="24sp"
-        android:layout_margin="10dp"
-        android:backgroundTint="@color/forText"
-        android:layout_marginBottom="16dp"/>
+            <!-- Заголовок -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/font3"
+                android:paddingStart="10dp"
+                android:text="Оставить воспоминание"
+                android:textColor="@color/forText"
+                android:textSize="36sp" />
 
-    <EditText
-        android:id="@+id/etNotes"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Добавить заметку..."
-        android:textColorHint="@color/forText"
-        android:textColor="@color/forText"
-        android:fontFamily="@font/font3"
-        android:textSize="24dp"
-        android:layout_margin="10dp"
-        android:backgroundTint="@color/forText"
-        android:layout_marginBottom="16dp"/>
+            <TextView
+                android:id="@+id/tvTaskTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:fontFamily="@font/font3"
+                android:text="Задание: "
+                android:textColor="@color/forText"
+                android:textSize="24sp" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnSave"
-        android:text="Сохранить"
-        android:textSize="30sp"
-        android:backgroundTint="@color/forText"
-        android:fontFamily="@font/font3"
-        android:textColor="@color/forBackground"
-        android:layout_margin="10dp"/>
+            <EditText
+                android:id="@+id/etTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/forText"
+                android:fontFamily="@font/font3"
+                android:hint="Название"
+                android:textColor="@color/forText"
+                android:textColorHint="@color/forText"
+                android:textSize="24sp" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Отмена"
-        android:id="@+id/btnCancel"
-        android:layout_margin="10dp"
-        android:textSize="24sp"
-        android:layout_gravity="center"
-        android:textColor="@color/forBackground"
-        android:backgroundTint="@color/forText"
-        android:fontFamily="@font/font3"/>
+            <EditText
+                android:id="@+id/etNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/forText"
+                android:fontFamily="@font/font3"
+                android:hint="Добавить заметку..."
+                android:textColor="@color/forText"
+                android:textColorHint="@color/forText"
+                android:textSize="24dp" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
+                <TextView
+                    android:id="@+id/addImage"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:background="@drawable/add_background"
+                    android:gravity="center"
+                    android:text="+"
+                    android:textColor="@color/forText"
+                    android:textSize="35sp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/images"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal" />
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:backgroundTint="@color/forText"
+                android:fontFamily="@font/font3"
+                android:text="Сохранить"
+                android:textColor="@color/forBackground"
+                android:textSize="30sp" />
+
+            <Button
+                android:id="@+id/btnCancel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="10dp"
+                android:backgroundTint="@color/forText"
+                android:fontFamily="@font/font3"
+                android:text="Отмена"
+                android:textColor="@color/forBackground"
+                android:textSize="24sp" />
+
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

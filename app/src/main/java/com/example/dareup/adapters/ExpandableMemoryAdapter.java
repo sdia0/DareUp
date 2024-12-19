@@ -2,6 +2,7 @@ package com.example.dareup.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -10,7 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.dareup.R;
@@ -39,7 +42,9 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
         this.memoryList = memoryList;
         this.context = context;
     }
-    public ExpandableMemoryAdapter() { }
+
+    public ExpandableMemoryAdapter() {
+    }
 
     @NonNull
     @Override
@@ -48,10 +53,33 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
         return new MemoryViewHolder(view);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindViewHolder(@NonNull MemoryViewHolder holder, int position) {
         Memory memory = memoryList.get(position);  // Получаем объект Memory по позиции
-        holder.bind(memory);  // Привязываем данные к View
+        List<Uri> links = memory.getUriImages();
+
+        // Проверяем, есть ли изображения
+        if (!links.isEmpty()) {
+            holder.imagesAdapter = new ImagesAdapter(context, links);
+            holder.imagesRecyclerView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
+            holder.imagesRecyclerView.setAdapter(holder.imagesAdapter);
+
+            // Добавляем слушатель для прокрутки
+            holder.imagesRecyclerView.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    // Отключаем перехват касания родительским элементом фрагмента
+                    v.getParent().requestDisallowInterceptTouchEvent(true);
+
+                    // Вернуть false, чтобы событие продолжало идти в дочерние элементы
+                    return false;
+                }
+            });
+        }
+
+        // Привязываем данные к остальной части View
+        holder.bind(memory);  // Привязываем другие данные (например, название задания, описание и т. д.)
     }
 
     // Метод для обновления данных в адаптере
@@ -70,6 +98,8 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
     class MemoryViewHolder extends RecyclerView.ViewHolder {
         private TextView userTitle, taskTitle, taskDescription;
         private LinearLayout detailsLayout;
+        private RecyclerView imagesRecyclerView;
+        ImagesAdapter imagesAdapter;
 
         @SuppressLint("ClickableViewAccessibility")
         public MemoryViewHolder(@NonNull View itemView) {
@@ -78,6 +108,7 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
             taskTitle = itemView.findViewById(R.id.taskTitle);
             detailsLayout = itemView.findViewById(R.id.detailsLayout);
             taskDescription = itemView.findViewById(R.id.taskDescription);
+            imagesRecyclerView = itemView.findViewById(R.id.images);
 
             // Добавляем обработчик двойного нажатия
             final GestureDetector gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
@@ -95,7 +126,7 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
             // Добавляем обработчик клика для раскрытия/сворачивания элемента
             itemView.setOnClickListener(v -> {
                 Memory memory = memoryList.get(getAdapterPosition());
-                if (!(memory.getTask().isEmpty() || memory.getDescription().isEmpty())) {
+                if (!(memory.getDescription().isEmpty() && memory.getUriImages().isEmpty())) {
                     memory.setExpanded(!memory.isExpanded());  // Меняем состояние "развернут/свернут"
                 }
                 notifyItemChanged(getAdapterPosition());
@@ -108,8 +139,13 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
                 userTitle.setText(memory.getTask());
                 taskTitle.setText("");
                 taskDescription.setText("");
-            }
-            else {
+            } else {
+                if (memory.getTitle().equals(memory.getTask())) {
+                    taskTitle.setVisibility(View.GONE);
+                }
+                if (memory.getDescription().isEmpty()) {
+                    taskDescription.setVisibility(View.GONE);
+                }
                 userTitle.setText(memory.getTitle());
                 taskTitle.setText(memory.getTask());
                 taskDescription.setText(memory.getDescription());
@@ -122,6 +158,7 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
                 detailsLayout.setVisibility(View.GONE);
             }
         }
+
         private void deleteMemoryFromFile(int position) {
             List<Memory> memoryList = new ArrayList<>();
             String fileName = "memories.json";
@@ -138,7 +175,8 @@ public class ExpandableMemoryAdapter extends RecyclerView.Adapter<ExpandableMemo
 
                 String json = builder.toString();
                 if (!json.isEmpty()) {
-                    Type memoryListType = new TypeToken<ArrayList<Memory>>() {}.getType();
+                    Type memoryListType = new TypeToken<ArrayList<Memory>>() {
+                    }.getType();
                     memoryList = new Gson().fromJson(json, memoryListType);
                 }
             } catch (IOException e) {

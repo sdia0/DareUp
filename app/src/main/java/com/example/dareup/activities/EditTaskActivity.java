@@ -1,11 +1,17 @@
 package com.example.dareup.activities;
 
 import android.content.Context;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -18,17 +24,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Intent;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.dareup.MainActivity;
 import com.example.dareup.R;
+import com.example.dareup.adapters.ImagesAdapter;
 import com.example.dareup.entities.Memory;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -46,13 +55,16 @@ public class EditTaskActivity extends AppCompatActivity {
     Button btnSave, btnCancel;
     EditText etTitle, etNotes;
     TextView tvCompletedTask;
-
     // Firebase instances
     private FirebaseAuth mAuth;
     private DatabaseReference mDatabase;
-
+    Uri imagePath = null;
+    private final int GALLERY_REQ_CODE = 1;
+    TextView tvAdd;
     private boolean canGoBack = false; // Флаг для контроля перехода назад
-
+    List<Uri> links = new ArrayList<>();
+    ImagesAdapter imagesAdapter;
+    RecyclerView recyclerView;
     @Override
     public void onBackPressed() {
         if (canGoBack) {
@@ -78,6 +90,21 @@ public class EditTaskActivity extends AppCompatActivity {
         etNotes = findViewById(R.id.etNotes);
         tvCompletedTask = findViewById(R.id.tvTaskTitle);
 
+        tvAdd = findViewById(R.id.addImage);
+
+        tvAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //image load
+                Intent iGallery = new Intent(Intent.ACTION_PICK);
+                iGallery.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(iGallery, GALLERY_REQ_CODE);
+            }
+        });
+
+        recyclerView = findViewById(R.id.images);
+        setAdapter();
+
         // Загружаем activeTask при запуске активности
         fetchActiveTaskAndDisplay();
 
@@ -88,7 +115,6 @@ public class EditTaskActivity extends AppCompatActivity {
                 fetchActiveTaskAndSaveMemory();
                 Intent intent = new Intent(EditTaskActivity.this, MainActivity.class);
                 intent.putExtra("dataChanged", true); // Передаем информацию о том, что данные изменились
-                setResult(RESULT_OK, intent);
                 startActivity(intent);
                 finish();
                 }
@@ -132,10 +158,27 @@ public class EditTaskActivity extends AppCompatActivity {
         // Вызов метода для обновления состояния кнопки при запуске активности
         updateButtonState();
     }
-
+    public void setAdapter() {
+        imagesAdapter = new ImagesAdapter(this, links);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        recyclerView.setAdapter(imagesAdapter);
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == GALLERY_REQ_CODE) {
+                //for gallery
+                imagePath = data.getData();
+                links.add(imagePath);
+                updateButtonState();
+                setAdapter();
+            }
+        }
+    }
     private void updateButtonState() {
         // Проверяем, есть ли текст в обоих полях
-        if (!etTitle.getText().toString().isEmpty() && !etNotes.getText().toString().isEmpty()) {
+        if (!etTitle.getText().toString().isEmpty() && (!etNotes.getText().toString().isEmpty() || !links.isEmpty())) {
             btnSave.setAlpha(1.0f);  // Делает кнопку непрозрачной
             btnSave.setEnabled(true); // Активирует кнопку
         } else {
@@ -166,6 +209,7 @@ public class EditTaskActivity extends AppCompatActivity {
 
                         // Устанавливаем activeTask в TextView сразу
                         tvCompletedTask.setText(activeTask);
+                        etTitle.setText(activeTask);
                     } else {
                         Log.e("Firebase", "activeTask not found.");
                     }
@@ -224,9 +268,9 @@ public class EditTaskActivity extends AppCompatActivity {
         String uid = user.getUid();
         String memoryId = mDatabase.child("memories").child(uid).push().getKey();
 
-        Memory memory = new Memory(memoryId, task, title, description); // Уровень 1 и очки 0
+        Memory memory = new Memory(title, task, description, memoryId); // Уровень 1 и очки 0
 
-        mDatabase.child("memories").child(uid).push().setValue(memory)
+        mDatabase.child("memories").child(uid).child(memoryId).setValue(memory)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
@@ -237,12 +281,21 @@ public class EditTaskActivity extends AppCompatActivity {
                         }
                     }
                 });
+        // Преобразуем список Uri в список строк
+        List<String> imageUrls = new ArrayList<>();
+        for (Uri uri : links) {
+            imageUrls.add(uri.toString()); // Сохраняем как строку URL
+        }
+        mDatabase.child("memories").child(uid).child(memoryId).child("images").setValue(imageUrls);
     }
     // Метод для добавления объекта Memory в JSON-файл
     private void saveMemoryToFile(String title, String task, String description) {
-
         // Создаем объект Memory
-        Memory newMemory = new Memory("", title, task, description);
+        List<String> imageUrls = new ArrayList<>();
+        for (Uri uri : links) {
+            imageUrls.add(uri.toString()); // Сохраняем как строку URL
+        }
+        Memory newMemory = new Memory("", title, task, description, imageUrls);
 
         // Прочитать существующий JSON-файл
         List<Memory> memoryList = new ArrayList<>();
@@ -280,7 +333,7 @@ public class EditTaskActivity extends AppCompatActivity {
         }
 
         // Добавляем новый объект Memory в список
-        memoryList.add(newMemory);
+        memoryList.add(0, newMemory);
 
         // Преобразуем обновленный список обратно в JSON
         Gson gson = new Gson();
